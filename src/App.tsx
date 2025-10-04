@@ -106,8 +106,10 @@ function App() {
     try {
       console.log('🎬 App.tsx: handleAddApplication called with:', app);
       console.log('🔌 App.tsx: API Connected:', apiConnected);
+      console.log('👤 App.tsx: User authenticated:', isAuthenticated, 'User ID:', user?.sub);
 
-      if (apiConnected && user && user.sub) {
+      // Only use API if connected AND user is authenticated with a valid user ID
+      if (apiConnected && isAuthenticated && user?.sub) {
         console.log('📡 App.tsx: Calling API to create application...');
         const newApp = await applicationApi.create(app, user.sub);
         console.log('✅ App.tsx: API returned new app:', newApp);
@@ -116,7 +118,7 @@ function App() {
         setApplications([...applications, newApp]);
         console.log('✨ App.tsx: State updated with new application');
       } else {
-        console.log('⚠️  App.tsx: API not connected, using local fallback');
+        console.log('⚠️  App.tsx: Using local fallback (API connected:', apiConnected, ', Authenticated:', isAuthenticated, ')');
         // Fallback to local state
         const newApp: Application = {
           ...app,
@@ -156,14 +158,6 @@ function App() {
       console.error('Error importing applications:', error);
       alert('Failed to import applications. Please try again.');
     }
-  };
-
-  const handleUpdateVulnerabilityStatus = (id: string, status: Vulnerability['status']) => {
-    setVulnerabilities(
-      vulnerabilities.map(vuln =>
-        vuln.id === id ? { ...vuln, status } : vuln
-      )
-    );
   };
 
   const calculateStats = (): DashboardStats => {
@@ -223,7 +217,6 @@ function App() {
                   <VulnerabilityList
                     vulnerabilities={vulnerabilities}
                     applications={applications}
-                    onUpdateStatus={handleUpdateVulnerabilityStatus}
                   />
                 }
               />
