@@ -25,7 +25,7 @@ function App() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // public
+        // Public
         await applicationApi.healthCheck();
         setApiConnected(true);
   
