@@ -3,18 +3,37 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Cached connection for serverless environments
+let cachedConnection: typeof mongoose | null = null;
+
 export async function connectDB() {
+  // Reuse existing connection in serverless
+  if (cachedConnection && mongoose.connection.readyState === 1) {
+    console.log('♻️  Using cached MongoDB connection');
+    return cachedConnection;
+  }
+
   const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chainguard';
+  
   try {
-    // Prefer 127.0.0.1 over localhost to avoid ::1 IPv6 issues
     mongoose.set('strictQuery', true);
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 1500, // fail fast in dev
+    
+    // Serverless-optimized settings
+    const connection = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10, // Connection pooling for serverless
+      minPoolSize: 1,
+      maxIdleTimeMS: 10000,
     } as any);
+    
+    cachedConnection = connection;
     console.log('✅ MongoDB connected');
+    return connection;
   } catch (err) {
     console.error('❌ MongoDB Connection Error:', err);
-    // IMPORTANT: don't throw; keep API alive so /api/health works
+    cachedConnection = null;
+    throw err;
   }
 }
 
