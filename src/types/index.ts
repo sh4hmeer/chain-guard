@@ -13,7 +13,7 @@ export interface Vulnerability {
   description: string;
   severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   cvssScore?: number;
-  affectedApps: string[]; // Array of app IDs
+  affectedApps: string[];
   publishedDate: string;
   lastModifiedDate?: string;
   references?: string[];
