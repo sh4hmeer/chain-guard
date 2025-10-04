@@ -62,8 +62,10 @@ const convertToApiApp = (app: Omit<Application, 'id' | 'addedDate'>) => ({
 export const applicationApi = {
   // Get all applications
   async getAll(): Promise<Application[]> {
-    const res = await api.get<ApiApplication[]>('/applications');
-    return res.data.map(convertToFrontendApp);
+    const res = await api.get('/applications');
+    // Handle both direct array response and wrapped response
+    const data = Array.isArray(res.data) ? res.data : (res.data as any).data || [];
+    return data.map(convertToFrontendApp);
   },
 
   // Get single application
@@ -80,8 +82,10 @@ export const applicationApi = {
 
   // Bulk create applications
   async bulkCreate(apps: Omit<Application, 'id' | 'addedDate'>[]): Promise<Application[]> {
-    const res = await api.post<ApiApplication[]>('/applications/bulk', apps.map(convertToApiApp));
-    return res.data.map(convertToFrontendApp);
+    const res = await api.post('/applications/bulk', apps.map(convertToApiApp));
+    // Handle both direct array response and wrapped response
+    const data = Array.isArray(res.data) ? res.data : (res.data as any).data || [];
+    return data.map(convertToFrontendApp);
   },
 
   // Update application
