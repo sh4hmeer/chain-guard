@@ -19,7 +19,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [apiConnected, setApiConnected] = useState(false);
   const [loadingVulnerabilities, setLoadingVulnerabilities] = useState(false);
-  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const { getAccessTokenSilently, isAuthenticated, user} = useAuth0();
 
   // Check API connection and load data
   useEffect(() => {
@@ -106,10 +106,10 @@ function App() {
     try {
       console.log('🎬 App.tsx: handleAddApplication called with:', app);
       console.log('🔌 App.tsx: API Connected:', apiConnected);
-      
-      if (apiConnected) {
+
+      if (apiConnected && user && user.sub) {
         console.log('📡 App.tsx: Calling API to create application...');
-        const newApp = await applicationApi.create(app);
+        const newApp = await applicationApi.create(app, user.sub);
         console.log('✅ App.tsx: API returned new app:', newApp);
         console.log('📋 App.tsx: Current applications count:', applications.length);
         

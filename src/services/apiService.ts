@@ -6,6 +6,9 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   },
 });
 
@@ -75,8 +78,11 @@ export const applicationApi = {
   },
 
   // Create new application
-  async create(app: Omit<Application, 'id' | 'addedDate'>): Promise<Application> {
-    const res = await api.post<ApiApplication>('/applications', convertToApiApp(app));
+  async create(app: Omit<Application, 'id' | 'addedDate'>, userId: string): Promise<Application> {
+    const x = convertToApiApp(app);
+    (x as any).userId = userId;
+    console.log('📡 apiService.ts: Creating application with data:', x);
+    const res = await api.post<ApiApplication>('/applications', x);
     return convertToFrontendApp(res.data);
   },
 

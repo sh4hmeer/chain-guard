@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { connectDB } from '../server/config/database';
-import { Vulnerability } from '../server/models/Vulnerability';
-import { verifyAuth0Token, handleUnauthorized } from '../server/middleware/auth';
+import { connectDB } from '../server/config/database.js';
+import { Vulnerability } from '../server/models/Vulnerability.js';
+import { verifyAuth0Token, handleUnauthorized } from '../server/middleware/auth.js';
 
 // Cached DB connection
 let isConnected = false;
