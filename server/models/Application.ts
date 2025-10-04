@@ -1,6 +1,12 @@
 import mongoose from 'mongoose';
 
 const applicationSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    required: true,
+    index: true,
+    trim: true
+  },
   name: {
     type: String,
     required: true,
@@ -26,5 +32,8 @@ const applicationSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Compound index for faster user-specific queries
+applicationSchema.index({ userId: 1, addedDate: -1 });
 
 export const Application = mongoose.model('Application', applicationSchema);
