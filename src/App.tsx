@@ -233,7 +233,6 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
   apiConnected: boolean;
 }) {
   const location = useLocation();
-  const { isAuthenticated } = useAuth0();
   
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
