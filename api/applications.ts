@@ -38,19 +38,44 @@ export default async function handler(
     return handleUnauthorized(res, authResult.error);
   }
 
+  // Extract user ID from the verified token
+  const userId = authResult.user?.sub as string;
+  if (!userId) {
+    return res.status(401).json({ message: 'User ID not found in token' });
+  }
+
   try {
     await ensureDbConnection();
 
     switch (req.method) {
       case 'GET': {
-        const applications = await Application.find().sort({ createdAt: -1 });
+        // Only fetch applications created by this user
+        const applications = await Application.find({ userId }).sort({ createdAt: -1 });
         return res.status(200).json(applications);
       }
 
       case 'POST': {
-        const newApp = new Application(req.body);
+        // Ensure the userId is set from the authenticated user
+        const newApp = new Application({
+          ...req.body,
+          userId // Override any userId in the request body with the authenticated user's ID
+        });
         await newApp.save();
         return res.status(201).json(newApp);
+      }
+
+      case 'DELETE': {
+        const { id } = req.query;
+        if (!id || typeof id !== 'string') {
+          return res.status(400).json({ message: 'Application ID is required' });
+        }
+        
+        // Only delete if the application belongs to this user
+        const app = await Application.findOneAndDelete({ _id: id, userId });
+        if (!app) {
+          return res.status(404).json({ message: 'Application not found or unauthorized' });
+        }
+        return res.status(200).json({ message: 'Application deleted successfully' });
       }
 
       default:

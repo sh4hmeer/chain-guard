@@ -38,13 +38,29 @@ export default async function handler(
     return handleUnauthorized(res, authResult.error);
   }
 
+  // Extract user ID from the verified token
+  const userId = authResult.user?.sub as string;
+  if (!userId) {
+    return res.status(401).json({ message: 'User ID not found in token' });
+  }
+
   try {
     await ensureDbConnection();
 
     switch (req.method) {
       case 'GET': {
-        const vulnerabilities = await Vulnerability.find()
-          .populate('application')
+        // Import Application model to filter user's apps
+        const { Application } = await import('../server/models/Application.js');
+        
+        // Get user's application IDs
+        const userApps = await Application.find({ userId }).select('_id');
+        const userAppIds = userApps.map(app => app._id);
+        
+        // Only fetch vulnerabilities affecting the user's applications
+        const vulnerabilities = await Vulnerability.find({
+          affectedApps: { $in: userAppIds }
+        })
+          .populate('affectedApps')
           .sort({ createdAt: -1 });
         return res.status(200).json(vulnerabilities);
       }

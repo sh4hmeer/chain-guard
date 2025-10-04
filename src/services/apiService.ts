@@ -102,12 +102,12 @@ export const applicationApi = {
 
   // Delete application
   async delete(id: string): Promise<void> {
-    await api.delete(`/applications/${id}`);
+    await api.delete(`/applications?id=${id}`);
   },
 
   // Delete all applications
   async deleteAll(): Promise<void> {
-    await api.delete('/applications');
+    await api.delete('/applications/all');
   },
 
   // Health check
