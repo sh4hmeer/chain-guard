@@ -1,11 +1,10 @@
 import express, { Request, Response } from 'express';
 import { Application } from '../models/Application.js';
-import { checkJwt, attachUserId, logUserAction } from '../middleware/auth.js';
+import { attachUserId, logUserAction } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes
-router.use(checkJwt);
+// Apply middleware to all routes (checkJwt is already applied in server/index.ts)
 router.use(attachUserId);
 router.use(logUserAction);
 
