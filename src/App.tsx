@@ -5,18 +5,50 @@ import { VulnerabilityList } from './components/VulnerabilityList';
 import { DashboardOverview } from './components/DashboardOverview';
 import { Application, Vulnerability, DashboardStats } from './types';
 import { getMockData, matchVulnerabilitiesToApps } from './services/vulnerabilityService';
+import { applicationApi } from './services/apiService';
 import { LayoutDashboard, Package, AlertTriangle, Menu, X } from 'lucide-react';
 
 function App() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [vulnerabilities, setVulnerabilities] = useState<Vulnerability[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [apiConnected, setApiConnected] = useState(false);
 
-  // Initialize with mock data
+  // Check API connection and load data
   useEffect(() => {
-    const mockData = getMockData([]);
-    setApplications(mockData.applications);
-    setVulnerabilities(mockData.vulnerabilities);
+    const initializeData = async () => {
+      try {
+        // Check if API is available
+        await applicationApi.healthCheck();
+        setApiConnected(true);
+        
+        // Load applications from MongoDB
+        const apps = await applicationApi.getAll();
+        
+        if (apps.length === 0) {
+          // If no apps in database, load mock data
+          const mockData = getMockData([]);
+          setVulnerabilities(mockData.vulnerabilities);
+          setApplications([]);
+        } else {
+          setApplications(apps);
+          const mockData = getMockData(apps);
+          setVulnerabilities(mockData.vulnerabilities);
+        }
+      } catch (error) {
+        console.error('API not available, using mock data:', error);
+        setApiConnected(false);
+        // Fallback to mock data
+        const mockData = getMockData([]);
+        setApplications(mockData.applications);
+        setVulnerabilities(mockData.vulnerabilities);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeData();
   }, []);
 
   // Re-match vulnerabilities when applications change
@@ -28,21 +60,51 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applications.length]);
 
-  const handleAddApplication = (app: Omit<Application, 'id' | 'addedDate'>) => {
-    const newApp: Application = {
-      ...app,
-      id: `app-${Date.now()}`,
-      addedDate: new Date().toISOString()
-    };
-    setApplications([...applications, newApp]);
+  const handleAddApplication = async (app: Omit<Application, 'id' | 'addedDate'>) => {
+    try {
+      if (apiConnected) {
+        const newApp = await applicationApi.create(app);
+        setApplications([...applications, newApp]);
+      } else {
+        // Fallback to local state
+        const newApp: Application = {
+          ...app,
+          id: `app-${Date.now()}`,
+          addedDate: new Date().toISOString()
+        };
+        setApplications([...applications, newApp]);
+      }
+    } catch (error) {
+      console.error('Error adding application:', error);
+      alert('Failed to add application. Please try again.');
+    }
   };
 
-  const handleRemoveApplication = (id: string) => {
-    setApplications(applications.filter(app => app.id !== id));
+  const handleRemoveApplication = async (id: string) => {
+    try {
+      if (apiConnected) {
+        await applicationApi.delete(id);
+      }
+      setApplications(applications.filter(app => app.id !== id));
+    } catch (error) {
+      console.error('Error removing application:', error);
+      alert('Failed to remove application. Please try again.');
+    }
   };
 
-  const handleImportApps = (apps: Application[]) => {
-    setApplications([...applications, ...apps]);
+  const handleImportApps = async (apps: Application[]) => {
+    try {
+      if (apiConnected) {
+        const newApps = await applicationApi.bulkCreate(apps);
+        setApplications([...applications, ...newApps]);
+      } else {
+        // Fallback to local state
+        setApplications([...applications, ...apps]);
+      }
+    } catch (error) {
+      console.error('Error importing applications:', error);
+      alert('Failed to import applications. Please try again.');
+    }
   };
 
   const handleUpdateVulnerabilityStatus = (id: string, status: Vulnerability['status']) => {
@@ -67,48 +129,65 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-100">
-        <Navigation mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+        <Navigation 
+          mobileMenuOpen={mobileMenuOpen} 
+          setMobileMenuOpen={setMobileMenuOpen}
+          apiConnected={apiConnected}
+        />
         
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <DashboardOverview
-                  stats={calculateStats()}
-                  vulnerabilities={vulnerabilities}
-                />
-              }
-            />
-            <Route
-              path="/applications"
-              element={
-                <AppInventory
-                  applications={applications}
-                  onAddApplication={handleAddApplication}
-                  onRemoveApplication={handleRemoveApplication}
-                  onImportApps={handleImportApps}
-                />
-              }
-            />
-            <Route
-              path="/vulnerabilities"
-              element={
-                <VulnerabilityList
-                  vulnerabilities={vulnerabilities}
-                  applications={applications}
-                  onUpdateStatus={handleUpdateVulnerabilityStatus}
-                />
-              }
-            />
-          </Routes>
-        </main>
+        {loading ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading ChainGuard...</p>
+            </div>
+          </div>
+        ) : (
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <DashboardOverview
+                    stats={calculateStats()}
+                    vulnerabilities={vulnerabilities}
+                  />
+                }
+              />
+              <Route
+                path="/applications"
+                element={
+                  <AppInventory
+                    applications={applications}
+                    onAddApplication={handleAddApplication}
+                    onRemoveApplication={handleRemoveApplication}
+                    onImportApps={handleImportApps}
+                  />
+                }
+              />
+              <Route
+                path="/vulnerabilities"
+                element={
+                  <VulnerabilityList
+                    vulnerabilities={vulnerabilities}
+                    applications={applications}
+                    onUpdateStatus={handleUpdateVulnerabilityStatus}
+                  />
+                }
+              />
+            </Routes>
+          </main>
+        )}
       </div>
     </Router>
   );
 }
 
-function Navigation({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boolean; setMobileMenuOpen: (open: boolean) => void }) {
+function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: { 
+  mobileMenuOpen: boolean; 
+  setMobileMenuOpen: (open: boolean) => void;
+  apiConnected: boolean;
+}) {
   const location = useLocation();
   
   const navItems = [
@@ -130,6 +209,16 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen: boo
               </div>
               <span className="text-xl font-bold text-gray-900">ChainGuard</span>
             </Link>
+            {apiConnected && (
+              <span className="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
+                MongoDB Connected
+              </span>
+            )}
+            {!apiConnected && (
+              <span className="ml-3 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-semibold">
+                Offline Mode
+              </span>
+            )}
           </div>
 
           {/* Desktop Navigation */}
