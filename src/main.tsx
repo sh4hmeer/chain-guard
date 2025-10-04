@@ -15,6 +15,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         audience: import.meta.env.VITE_AUTH0_AUDIENCE, // must be the exact Identifier
         redirect_uri: window.location.origin + '/callback',
       }}
+      cacheLocation="localstorage"
+      useRefreshTokens={true}
     >
       <App />
     </Auth0Provider>

@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { AppInventory } from './components/AppInventory';
 import { VulnerabilityList } from './components/VulnerabilityList';
 import { DashboardOverview } from './components/DashboardOverview';
+import { AccountView } from './components/AccountView';
+import { AuthCallback } from './components/AuthCallback';
 import { Application, Vulnerability, DashboardStats } from './types';
 import { getMockData, matchVulnerabilitiesToApps } from './services/vulnerabilityService';
 import { applicationApi } from './services/apiService';
-import { LayoutDashboard, Package, AlertTriangle, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, AlertTriangle, Menu, X, User, LogOut, LogIn } from 'lucide-react';
 import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
 import { setAuthTokenProvider } from './services/apiService';
 
@@ -188,37 +190,36 @@ function App() {
               <Route
                 path="/applications"
                 element={
-                <Protect
-                  Comp={() => (
-                    <AppInventory
-                      applications={applications}
-                      onAddApplication={handleAddApplication}
-                      onRemoveApplication={handleRemoveApplication}
-                      onImportApps={handleImportApps}
-                      />
-                    )}
+                  <AppInventory
+                    applications={applications}
+                    onAddApplication={handleAddApplication}
+                    onRemoveApplication={handleRemoveApplication}
+                    onImportApps={handleImportApps}
                   />
                 }
               />
               <Route
                 path="/vulnerabilities"
                 element={
-                  <Protect
-                    Comp={() => (
-                      <VulnerabilityList
-                        vulnerabilities={vulnerabilities}
-                        applications={applications}
-                        onUpdateStatus={handleUpdateVulnerabilityStatus}
-                      />
-                    )}
+                  <VulnerabilityList
+                    vulnerabilities={vulnerabilities}
+                    applications={applications}
+                    onUpdateStatus={handleUpdateVulnerabilityStatus}
                   />
                 }
               />
               <Route 
                 path="/callback"
+                element={<AuthCallback />}
+              />
+              <Route
+                path="/account"
                 element={
-                  <div>Signing you in…</div>}
+                  <Protect
+                    Comp={() => <AccountView />}
                   />
+                }
+              />
             </Routes>
           </main>
         )}
@@ -233,6 +234,23 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
   apiConnected: boolean;
 }) {
   const location = useLocation();
+  const { user, isAuthenticated, loginWithRedirect, logout } = useAuth0();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    
+    if (userMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [userMenuOpen]);
   
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -281,6 +299,66 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
                 {label}
               </Link>
             ))}
+            
+            {/* User Menu */}
+            {isAuthenticated && user ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  {user.picture ? (
+                    <img
+                      src={user.picture}
+                      alt={user.name || 'User'}
+                      className="w-8 h-8 rounded-full border-2 border-gray-300"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                      <User size={16} className="text-white" />
+                    </div>
+                  )}
+                  <span className="text-sm font-medium text-gray-700 max-w-[120px] truncate">
+                    {user.name || user.email || 'User'}
+                  </span>
+                </button>
+                
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-gray-200">
+                      <p className="text-sm font-semibold text-gray-900">{user.name || 'User'}</p>
+                      <p className="text-xs text-gray-600 truncate">{user.email}</p>
+                    </div>
+                    <Link
+                      to="/account"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <User size={16} />
+                      My Account
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        logout({ logoutParams: { returnTo: window.location.origin } });
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => loginWithRedirect()}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              >
+                <LogIn size={18} />
+                Sign In
+              </button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -314,6 +392,64 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
                 {label}
               </Link>
             ))}
+            
+            {/* Mobile User Menu */}
+            {isAuthenticated && user ? (
+              <>
+                <div className="border-t border-gray-200 mt-2 pt-2">
+                  <div className="px-3 py-2">
+                    <div className="flex items-center gap-3">
+                      {user.picture ? (
+                        <img
+                          src={user.picture}
+                          alt={user.name || 'User'}
+                          className="w-10 h-10 rounded-full border-2 border-gray-300"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                          <User size={20} className="text-white" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{user.name || 'User'}</p>
+                        <p className="text-xs text-gray-600 truncate">{user.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <Link
+                    to="/account"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <User size={18} />
+                    My Account
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      logout({ logoutParams: { returnTo: window.location.origin } });
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut size={18} />
+                    Sign Out
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="border-t border-gray-200 mt-2 pt-2">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    loginWithRedirect();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                >
+                  <LogIn size={18} />
+                  Sign In
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
