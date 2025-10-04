@@ -1,14 +1,16 @@
 import { DashboardStats, Vulnerability } from '../types';
-import { Shield, AlertTriangle, Activity, TrendingUp } from 'lucide-react';
+import { Shield, AlertTriangle, Activity, TrendingUp, Loader2 } from 'lucide-react';
 
 interface DashboardOverviewProps {
   stats: DashboardStats;
   vulnerabilities: Vulnerability[];
+  loadingVulnerabilities?: boolean;
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   stats,
-  vulnerabilities
+  vulnerabilities,
+  loadingVulnerabilities = false
 }) => {
   const recentVulnerabilities = vulnerabilities
     .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
@@ -123,11 +125,26 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       </div>
 
       {/* Recent Vulnerabilities */}
-      {recentVulnerabilities.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">
-            Recent Vulnerabilities
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-gray-800">
+            Recent Vulnerabilities from NIST NVD
           </h3>
+          {loadingVulnerabilities && (
+            <div className="flex items-center gap-2 text-sm text-blue-600">
+              <Loader2 className="animate-spin" size={16} />
+              <span>Scanning for live vulnerabilities...</span>
+            </div>
+          )}
+        </div>
+        
+        {loadingVulnerabilities ? (
+          <div className="text-center py-8">
+            <Loader2 className="animate-spin mx-auto mb-3 text-blue-600" size={32} />
+            <p className="text-gray-600">Searching NIST National Vulnerability Database...</p>
+            <p className="text-xs text-gray-500 mt-2">This may take a moment as we scan for CVEs</p>
+          </div>
+        ) : recentVulnerabilities.length > 0 ? (
           <div className="space-y-3">
             {recentVulnerabilities.map((vuln) => {
               const getSeverityColor = (severity: string) => {
@@ -173,8 +190,14 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               );
             })}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="text-center py-8">
+            <AlertTriangle className="mx-auto mb-3 text-gray-400" size={32} />
+            <p className="text-gray-600">No vulnerabilities found</p>
+            <p className="text-xs text-gray-500 mt-1">Your applications appear to be secure</p>
+          </div>
+        )}
+      </div>
 
       {/* Quick Actions */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">

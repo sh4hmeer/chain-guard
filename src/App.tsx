@@ -6,7 +6,7 @@ import { DashboardOverview } from './components/DashboardOverview';
 import { AccountView } from './components/AccountView';
 import { AuthCallback } from './components/AuthCallback';
 import { Application, Vulnerability, DashboardStats } from './types';
-import { getMockData, matchVulnerabilitiesToApps } from './services/vulnerabilityService';
+import { getMockData, getVulnerabilities } from './services/vulnerabilityService';
 import { applicationApi } from './services/apiService';
 import { LayoutDashboard, Package, AlertTriangle, Menu, X, User, LogOut, LogIn } from 'lucide-react';
 import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
@@ -18,6 +18,7 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [apiConnected, setApiConnected] = useState(false);
+  const [loadingVulnerabilities, setLoadingVulnerabilities] = useState(false);
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
 
   // Check API connection and load data
@@ -31,17 +32,23 @@ function App() {
         if (isAuthenticated) {
           // protected
           const apps = await applicationApi.getAll();
-          if (apps.length === 0) {
-            const mock = getMockData([]);
-            setApplications([]);
-            setVulnerabilities(mock.vulnerabilities);
-          } else {
-            setApplications(apps);
+          setApplications(apps);
+          
+          // Fetch live vulnerabilities from NIST NVD
+          setLoadingVulnerabilities(true);
+          try {
+            const vulns = await getVulnerabilities(apps, true);
+            setVulnerabilities(vulns);
+          } catch (error) {
+            console.error('Error fetching vulnerabilities:', error);
+            // Fallback to mock data
             const mock = getMockData(apps);
             setVulnerabilities(mock.vulnerabilities);
+          } finally {
+            setLoadingVulnerabilities(false);
           }
         } else {
-          // not logged in → demo mode
+          // not logged in → demo mode with mock data
           const mock = getMockData([]);
           setApplications(mock.applications);
           setVulnerabilities(mock.vulnerabilities);
@@ -60,14 +67,25 @@ function App() {
     initializeData();
   }, [isAuthenticated]);
 
-  // Re-match vulnerabilities when applications change
+  // Re-fetch vulnerabilities when applications change
   useEffect(() => {
-    if (applications.length > 0 && vulnerabilities.length > 0) {
-      const matched = matchVulnerabilitiesToApps(vulnerabilities, applications);
-      setVulnerabilities(matched);
-    }
+    const refetchVulnerabilities = async () => {
+      if (applications.length > 0 && isAuthenticated) {
+        setLoadingVulnerabilities(true);
+        try {
+          const vulns = await getVulnerabilities(applications, true);
+          setVulnerabilities(vulns);
+        } catch (error) {
+          console.error('Error re-fetching vulnerabilities:', error);
+        } finally {
+          setLoadingVulnerabilities(false);
+        }
+      }
+    };
+
+    refetchVulnerabilities();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applications.length]);
+  }, [applications.length, isAuthenticated]);
 
   useEffect(() => {
     setAuthTokenProvider(async () => {
@@ -77,7 +95,7 @@ function App() {
   }, [isAuthenticated, getAccessTokenSilently]);
       
 
-  const Protect = ({ Comp }: { Comp: React.ComponentType<any> }) => {
+  const Protect = ({ Comp }: { Comp: React.ComponentType }) => {
     const Protected = withAuthenticationRequired(Comp, {
       onRedirecting: () => <div>Checking auth…</div>,
     });
@@ -184,6 +202,7 @@ function App() {
                   <DashboardOverview
                     stats={calculateStats()}
                     vulnerabilities={vulnerabilities}
+                    loadingVulnerabilities={loadingVulnerabilities}
                   />
                 }
               />

@@ -9,20 +9,24 @@ export const checkJwt = auth({
 });
 
 // Extend Express Request to include userId
-declare global {
-  namespace Express {
-    interface Request {
-      userId?: string;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    userId?: string;
   }
 }
 
 // Middleware to attach userId from JWT to request
 export const attachUserId = (req: Request, res: Response, next: NextFunction) => {
-  // @ts-expect-error - auth is added by express-oauth2-jwt-bearer
+  // In development, if no auth is present, use a demo user
+  const isDev = process.env.NODE_ENV !== 'production';
+  
   if (req.auth && req.auth.payload && req.auth.payload.sub) {
-    // @ts-expect-error - auth is added by express-oauth2-jwt-bearer
     req.userId = req.auth.payload.sub;
+    next();
+  } else if (isDev) {
+    // Development mode: allow requests without auth using a demo userId
+    console.warn('[DEV] No auth token found, using demo userId');
+    req.userId = 'demo-user';
     next();
   } else {
     res.status(401).json({ message: 'Unauthorized: No user ID found in token' });
