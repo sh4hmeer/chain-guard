@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { Application } from '../types';
 
-console.log('VITE_API_BASE=', import.meta.env.VITE_API_BASE);
 const API_BASE_URL = import.meta.env.VITE_API_BASE;
 const api = axios.create({
   baseURL: API_BASE_URL,

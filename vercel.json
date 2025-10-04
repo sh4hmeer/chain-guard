@@ -1,5 +1,5 @@
 {
-    "rewrites": [
-      { "source": "/(.*)", "destination": "/index.html" }
-    ]
-  }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://chainguardia.vercel.app/api/$1" }
+  ]
+}
