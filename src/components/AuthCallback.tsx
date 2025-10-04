@@ -13,7 +13,7 @@ export function AuthCallback() {
         // Redirect to home page on error
         navigate('/');
       } else if (isAuthenticated) {
-        // Successfully authenticated, redirect to home
+        // Authenticated, redirect to home
         const returnTo = sessionStorage.getItem('returnTo') || '/';
         sessionStorage.removeItem('returnTo');
         navigate(returnTo);
