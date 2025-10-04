@@ -1,28 +1,13 @@
 import axios from 'axios';
 import { Application } from '../types';
 
-// AFTER
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE ||
-  import.meta.env.VITE_API_URL ||     // legacy name if you used it before
-  '/api';   
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE;
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
-
-function asArray<T>(payload: unknown): T[] {
-  if (Array.isArray(payload)) return payload as T[];
-  if (payload && typeof payload === 'object' && Array.isArray((payload as any).data)) {
-    return (payload as any).data as T[];
-  }
-  // If server sent HTML or an error JSON, throw with a helpful sample:
-  const sample = typeof payload === 'string' ? payload.slice(0, 200) : payload;
-  throw new Error('Expected array from API, got: ' + JSON.stringify(sample));
-}
 
 export interface ApiApplication {
   _id: string;
@@ -77,9 +62,8 @@ const convertToApiApp = (app: Omit<Application, 'id' | 'addedDate'>) => ({
 export const applicationApi = {
   // Get all applications
   async getAll(): Promise<Application[]> {
-    const res = await api.get('/applications');
-    const list = asArray<ApiApplication>(res.data);
-    return list.map(convertToFrontendApp);
+    const res = await api.get<ApiApplication[]>('/applications');
+    return res.data.map(convertToFrontendApp);
   },
 
   // Get single application
@@ -96,9 +80,8 @@ export const applicationApi = {
 
   // Bulk create applications
   async bulkCreate(apps: Omit<Application, 'id' | 'addedDate'>[]): Promise<Application[]> {
-    const res = await api.post('/applications/bulk', apps.map(convertToApiApp));
-    const list = asArray<ApiApplication>(res.data);
-    return list.map(convertToFrontendApp);
+    const res = await api.post<ApiApplication[]>('/applications/bulk', apps.map(convertToApiApp));
+    return res.data.map(convertToFrontendApp);
   },
 
   // Update application
@@ -119,11 +102,8 @@ export const applicationApi = {
 
   // Health check
   async healthCheck(): Promise<{ status: string; message: string } | string> {
-    const res = await api.get('/health', { validateStatus: () => true });
-    if (res.status >= 200 && res.status < 300 && typeof res.data === 'object') {
-      return res.data as any;
-    }
-    const sample = typeof res.data === 'string' ? res.data.slice(0, 200) : res.data;
-    throw new Error(`Health check failed (${res.status}). Payload: ${JSON.stringify(sample)}`);
-    },
+    const res = await api.get('/health');
+    // Some backends return JSON, others plain text—support both.
+    return typeof res.data === 'string' ? res.data : (res.data as { status: string; message: string });
+  },
 };

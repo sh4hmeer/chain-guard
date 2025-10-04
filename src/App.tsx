@@ -22,69 +22,43 @@ function App() {
 
   // Check API connection and load data
   useEffect(() => {
-  let cancelled = false;
-
-  const initializeData = async () => {
-    setLoading(true);
-
-    // 1) Probe the API first — bail to mocks if unhealthy
-    try {
-      const health = await applicationApi.healthCheck(); // should be { status: 'ok', ... }
-      if (!health || (typeof health === 'object' && (health as any).status !== 'ok')) {
-        throw new Error('Unhealthy API response');
-      }
-      if (cancelled) return;
-      setApiConnected(true);
-    } catch (err) {
-      if (cancelled) return;
-      console.error('Health check failed, using mock data:', err);
-      setApiConnected(false);
-      const mock = getMockData([]);
-      setApplications(mock.applications);
-      setVulnerabilities(mock.vulnerabilities);
-      setLoading(false);
-      return; // ⛔ stop here; don’t call protected endpoints
-    }
-
-    // 2) If not authenticated → demo data
-    if (!isAuthenticated) {
-      if (cancelled) return;
-      const mock = getMockData([]);
-      setApplications(mock.applications);
-      setVulnerabilities(mock.vulnerabilities);
-      setLoading(false);
-      return;
-    }
-
-    // 3) Authenticated path — fetch apps defensively
-    try {
-      const apps = await applicationApi.getAll();
-      if (cancelled) return;
-
-      const list = Array.isArray(apps) ? apps : [];
-      if (list.length === 0) {
+    const initializeData = async () => {
+      try {
+        // public
+        await applicationApi.healthCheck();
+        setApiConnected(true);
+  
+        if (isAuthenticated) {
+          // protected
+          const apps = await applicationApi.getAll();
+          if (apps.length === 0) {
+            const mock = getMockData([]);
+            setApplications([]);
+            setVulnerabilities(mock.vulnerabilities);
+          } else {
+            setApplications(apps);
+            const mock = getMockData(apps);
+            setVulnerabilities(mock.vulnerabilities);
+          }
+        } else {
+          // not logged in → demo mode
+          const mock = getMockData([]);
+          setApplications(mock.applications);
+          setVulnerabilities(mock.vulnerabilities);
+        }
+      } catch (err) {
+        console.error('API not available, using mock data:', err);
+        setApiConnected(false);
         const mock = getMockData([]);
-        setApplications([]);
+        setApplications(mock.applications);
         setVulnerabilities(mock.vulnerabilities);
-      } else {
-        setApplications(list);
-        const mock = getMockData(list);
-        setVulnerabilities(mock.vulnerabilities);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      if (cancelled) return;
-      console.error('Fetching applications failed, using mock:', err);
-      const mock = getMockData([]);
-      setApplications(mock.applications);
-      setVulnerabilities(mock.vulnerabilities);
-    } finally {
-      if (!cancelled) setLoading(false);
-    }
-  };
-
-  initializeData();
-  return () => { cancelled = true; };
-}, [isAuthenticated]);
+    };
+  
+    initializeData();
+  }, [isAuthenticated]);
 
   // Re-match vulnerabilities when applications change
   useEffect(() => {
@@ -484,4 +458,3 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
 }
 
 export default App;
-
