@@ -65,10 +65,19 @@ export const applicationApi = {
   // Create new application
   create: async (app: Omit<Application, 'id' | 'addedDate'>): Promise<Application> => {
     try {
-      const response = await api.post<ApiApplication>('/applications', convertToApiApp(app));
-      return convertToFrontendApp(response.data);
+      console.log('🚀 Frontend: Creating application:', app);
+      const apiApp = convertToApiApp(app);
+      console.log('📦 Frontend: Sending to API:', apiApp);
+      
+      const response = await api.post<ApiApplication>('/applications', apiApp);
+      
+      console.log('✅ Frontend: Received response:', response.data);
+      const frontendApp = convertToFrontendApp(response.data);
+      console.log('🎯 Frontend: Converted to frontend format:', frontendApp);
+      
+      return frontendApp;
     } catch (error) {
-      console.error('Error creating application:', error);
+      console.error('❌ Frontend: Error creating application:', error);
       throw error;
     }
   },

@@ -62,10 +62,19 @@ function App() {
 
   const handleAddApplication = async (app: Omit<Application, 'id' | 'addedDate'>) => {
     try {
+      console.log('🎬 App.tsx: handleAddApplication called with:', app);
+      console.log('🔌 App.tsx: API Connected:', apiConnected);
+      
       if (apiConnected) {
+        console.log('📡 App.tsx: Calling API to create application...');
         const newApp = await applicationApi.create(app);
+        console.log('✅ App.tsx: API returned new app:', newApp);
+        console.log('📋 App.tsx: Current applications count:', applications.length);
+        
         setApplications([...applications, newApp]);
+        console.log('✨ App.tsx: State updated with new application');
       } else {
+        console.log('⚠️  App.tsx: API not connected, using local fallback');
         // Fallback to local state
         const newApp: Application = {
           ...app,
@@ -75,7 +84,7 @@ function App() {
         setApplications([...applications, newApp]);
       }
     } catch (error) {
-      console.error('Error adding application:', error);
+      console.error('❌ App.tsx: Error adding application:', error);
       alert('Failed to add application. Please try again.');
     }
   };
