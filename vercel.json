@@ -1,6 +1,5 @@
 {
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://<YOUR-BACKEND-DOMAIN>/api/$1" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ]
-}
+    "rewrites": [
+      { "source": "/(.*)", "destination": "/index.html" }
+    ]
+  }
