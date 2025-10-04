@@ -3,16 +3,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chainguard';
-
 export const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(MONGODB_URI);
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    return conn;
-  } catch (error) {
-    console.error('❌ MongoDB Connection Error:', error);
-    process.exit(1);
+    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/chainguard';
+    await mongoose.connect(uri);
+    console.log('✅ MongoDB connected');
+  } catch (err) {
+    console.error('❌ MongoDB Connection Error:', err);
+    // Do NOT throw in dev; let API continue to serve /api/health etc.
   }
 };
 

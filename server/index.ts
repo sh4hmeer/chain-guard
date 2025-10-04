@@ -8,7 +8,10 @@ import vulnerabilitiesRouter from './routes/vulnerabilities.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
+app.listen(PORT, () => {
+  console.log(`API running at http://localhost:${PORT}/api`);
+});
 
 // Middleware
 app.use(cors());
@@ -16,7 +19,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Connect to MongoDB
-connectDB();
+connectDB().catch(err => {
+  console.error('Mongo connect failed:', err);
+});
 
 // Routes
 app.use('/api/applications', applicationsRouter);
