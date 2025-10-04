@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { connectDB } from '../server/config/database';
 import { Vulnerability } from '../server/models/Vulnerability';
+import { verifyAuth0Token, handleUnauthorized } from '../server/middleware/auth';
 
 // Cached DB connection
 let isConnected = false;
@@ -29,6 +30,12 @@ export default async function handler(
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
+  }
+
+  // Verify Auth0 token
+  const authResult = await verifyAuth0Token(req);
+  if (!authResult.authorized) {
+    return handleUnauthorized(res, authResult.error);
   }
 
   try {
