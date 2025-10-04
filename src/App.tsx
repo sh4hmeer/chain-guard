@@ -7,6 +7,8 @@ import { Application, Vulnerability, DashboardStats } from './types';
 import { getMockData, matchVulnerabilitiesToApps } from './services/vulnerabilityService';
 import { applicationApi } from './services/apiService';
 import { LayoutDashboard, Package, AlertTriangle, Menu, X } from 'lucide-react';
+import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
+import { setAuthTokenProvider } from './services/apiService';
 
 function App() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -14,42 +16,47 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [apiConnected, setApiConnected] = useState(false);
+  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
 
   // Check API connection and load data
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // Check if API is available
+        // public
         await applicationApi.healthCheck();
         setApiConnected(true);
-        
-        // Load applications from MongoDB
-        const apps = await applicationApi.getAll();
-        
-        if (apps.length === 0) {
-          // If no apps in database, load mock data
-          const mockData = getMockData([]);
-          setVulnerabilities(mockData.vulnerabilities);
-          setApplications([]);
+  
+        if (isAuthenticated) {
+          // protected
+          const apps = await applicationApi.getAll();
+          if (apps.length === 0) {
+            const mock = getMockData([]);
+            setApplications([]);
+            setVulnerabilities(mock.vulnerabilities);
+          } else {
+            setApplications(apps);
+            const mock = getMockData(apps);
+            setVulnerabilities(mock.vulnerabilities);
+          }
         } else {
-          setApplications(apps);
-          const mockData = getMockData(apps);
-          setVulnerabilities(mockData.vulnerabilities);
+          // not logged in → demo mode
+          const mock = getMockData([]);
+          setApplications(mock.applications);
+          setVulnerabilities(mock.vulnerabilities);
         }
-      } catch (error) {
-        console.error('API not available, using mock data:', error);
+      } catch (err) {
+        console.error('API not available, using mock data:', err);
         setApiConnected(false);
-        // Fallback to mock data
-        const mockData = getMockData([]);
-        setApplications(mockData.applications);
-        setVulnerabilities(mockData.vulnerabilities);
+        const mock = getMockData([]);
+        setApplications(mock.applications);
+        setVulnerabilities(mock.vulnerabilities);
       } finally {
         setLoading(false);
       }
     };
-
+  
     initializeData();
-  }, []);
+  }, [isAuthenticated]);
 
   // Re-match vulnerabilities when applications change
   useEffect(() => {
@@ -59,6 +66,21 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applications.length]);
+
+  useEffect(() => {
+    setAuthTokenProvider(async () => {
+      if (!isAuthenticated) return null;
+      return await getAccessTokenSilently(); // audience comes from Auth0Provider
+    });
+  }, [isAuthenticated, getAccessTokenSilently]);
+      
+
+  const Protect = ({ Comp }: { Comp: React.ComponentType<any> }) => {
+    const Protected = withAuthenticationRequired(Comp, {
+      onRedirecting: () => <div>Checking auth…</div>,
+    });
+    return <Protected />;
+  };
 
   const handleAddApplication = async (app: Omit<Application, 'id' | 'addedDate'>) => {
     try {
@@ -166,24 +188,37 @@ function App() {
               <Route
                 path="/applications"
                 element={
-                  <AppInventory
-                    applications={applications}
-                    onAddApplication={handleAddApplication}
-                    onRemoveApplication={handleRemoveApplication}
-                    onImportApps={handleImportApps}
+                <Protect
+                  Comp={() => (
+                    <AppInventory
+                      applications={applications}
+                      onAddApplication={handleAddApplication}
+                      onRemoveApplication={handleRemoveApplication}
+                      onImportApps={handleImportApps}
+                      />
+                    )}
                   />
                 }
               />
               <Route
                 path="/vulnerabilities"
                 element={
-                  <VulnerabilityList
-                    vulnerabilities={vulnerabilities}
-                    applications={applications}
-                    onUpdateStatus={handleUpdateVulnerabilityStatus}
+                  <Protect
+                    Comp={() => (
+                      <VulnerabilityList
+                        vulnerabilities={vulnerabilities}
+                        applications={applications}
+                        onUpdateStatus={handleUpdateVulnerabilityStatus}
+                      />
+                    )}
                   />
                 }
               />
+              <Route 
+                path="/callback"
+                element={
+                  <div>Signing you in…</div>}
+                  />
             </Routes>
           </main>
         )}
@@ -198,6 +233,7 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
   apiConnected: boolean;
 }) {
   const location = useLocation();
+  const { isAuthenticated } = useAuth0();
   
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
