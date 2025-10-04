@@ -6,7 +6,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5050;
+app.listen(PORT, () => {
+  console.log(`API running at http://localhost:${PORT}/api`);
+});
 
 // Configure CORS to allow frontend
 app.use(cors({
@@ -17,11 +20,13 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// MongoDB connection
-const uri = "mongodb+srv://gmongru_db_user:DUQPdxNbR6JLAskM@applist.zecatqq.mongodb.net/?retryWrites=true&w=majority&appName=applist"
-let db: Db;
+// Connect to MongoDB
+connectDB().catch(err => {
+  console.error('Mongo connect failed:', err);
+});
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const uri = process.env.MONGO_URI || 'empty';
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
