@@ -3,16 +3,25 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const connectDB = async () => {
+export async function connectDB() {
+  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chainguard';
   try {
-    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/chainguard';
-    await mongoose.connect(uri);
+    // Prefer 127.0.0.1 over localhost to avoid ::1 IPv6 issues
+    mongoose.set('strictQuery', true);
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 1500, // fail fast in dev
+    } as any);
     console.log('✅ MongoDB connected');
   } catch (err) {
     console.error('❌ MongoDB Connection Error:', err);
-    // Do NOT throw in dev; let API continue to serve /api/health etc.
+    // IMPORTANT: don't throw; keep API alive so /api/health works
   }
-};
+}
+
+export function isDbOnline() {
+  // 1 = connected
+  return mongoose.connection.readyState === 1;
+}
 
 export const disconnectDB = async () => {
   try {
