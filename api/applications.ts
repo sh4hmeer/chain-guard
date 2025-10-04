@@ -32,7 +32,7 @@ export default async function handler(
     return;
   }
 
-  // Verify Auth0 token
+  // Verify Auth0 tok
   const authResult = await verifyAuth0Token(req);
   if (!authResult.authorized) {
     return handleUnauthorized(res, authResult.error);
