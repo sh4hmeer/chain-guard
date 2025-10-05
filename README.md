@@ -1,4 +1,4 @@
-# ChainGuard 🛡️# React + TypeScript + Vite
+# ChainGuardia 🛡️# React + TypeScript + Vite
 
 
 
@@ -6,11 +6,11 @@
 
 
 
-# ChainGuard 🛡️
+# ChainGuardia 🛡️
 
 **Real-time supply chain security monitoring with AI-powered vulnerability intelligence**
 
-ChainGuard is a comprehensive application security platform that helps organizations track their software inventory and identify vulnerabilities in real-time. Built with React, TypeScript, MongoDB, and Google Gemini AI.
+ChainGuardia is a comprehensive application security platform that helps organizations track their software inventory and identify vulnerabilities in real-time. Built with React, TypeScript, MongoDB, and Google Gemini AI.
 
 ## ✨ Key Features
 

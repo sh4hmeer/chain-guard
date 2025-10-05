@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && vite build",
     "vercel-build": "npm run build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -18,6 +18,8 @@
   "dependencies": {
     "@auth0/auth0-react": "^2.5.0",
     "@google/generative-ai": "^0.24.1",
+    "@react-three/drei": "9.97.0",
+    "@react-three/fiber": "8.17.0",
     "axios": "^1.12.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -31,7 +33,11 @@
     "papaparse": "^5.5.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.9.3"
+    "react-router-dom": "^7.9.3",
+    "react-tsparticles": "^2.12.2",
+    "three": "0.160.0",
+    "tsparticles": "^3.9.1",
+    "vanta": "^0.5.24"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
@@ -56,5 +62,8 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
+  },
+  "overrides": {
+    "react-reconciler": "0.29.x"
   }
 }

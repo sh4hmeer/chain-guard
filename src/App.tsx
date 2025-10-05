@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { AppInventory } from './components/AppInventory';
 import { VulnerabilityList } from './components/VulnerabilityList';
 import { DashboardOverview } from './components/DashboardOverview';
@@ -12,6 +12,44 @@ import { applicationApi } from './services/apiService';
 import { LayoutDashboard, Package, AlertTriangle, Menu, X, User, LogOut, LogIn, Shield } from 'lucide-react';
 import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
 import { setAuthTokenProvider } from './services/apiService';
+import { LandingPage } from './components/LandingPage';
+import VantaBackground from './components/VantaBackground';
+
+  // Shows Vanta only on landing page (/)
+  function LandingVanta() {
+    const { pathname } = useLocation();
+    if (pathname !== '/') return null;
+    return <VantaBackground />;
+  }
+
+  // Switches outer bg so Vanta is visible on landing page
+  function BgSwitcher({ children }: { children: React.ReactNode }) {
+    const { pathname } = useLocation();
+    const bg = pathname === '/' ? 'bg-transparent' : 'bg-gray-100';
+    return <div className={`min-h-screen ${bg}`}>{children}</div>;
+  }
+
+  // Redirect authenticated users from landing page to dashboard
+  function LandingPageOrRedirect() {
+    const { isAuthenticated, isLoading } = useAuth0();
+    
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+    
+    if (isAuthenticated) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    
+    return <LandingPage />;
+  }
 
 function App() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -185,25 +223,32 @@ function App() {
 
   return (
     <Router>
+      <BgSwitcher>
+      <LandingVanta />   {/* full-page background on landing page only */}
       <div className="min-h-screen bg-gray-100">
-        <Navigation 
-          mobileMenuOpen={mobileMenuOpen} 
-          setMobileMenuOpen={setMobileMenuOpen}
-          apiConnected={apiConnected}
-        />
+          {isAuthenticated && (
+          <Navigation
+            mobileMenuOpen={mobileMenuOpen} 
+            setMobileMenuOpen={setMobileMenuOpen}
+            apiConnected={apiConnected}
+          />
+        )}
+
         
         {loading ? (
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading ChainGuard...</p>
+              <p className="text-gray-600">Loading ChainGuardia...</p>
             </div>
           </div>
         ) : (
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Routes>
+              <Route path="/" element={<LandingPageOrRedirect />} />
+
               <Route
-                path="/"
+                path="/dashboard"
                 element={
                   <DashboardOverview
                     stats={calculateStats()}
@@ -252,11 +297,13 @@ function App() {
           </main>
         )}
       </div>
+      </BgSwitcher>
     </Router>
   );
 }
 
 function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: { 
+  
   mobileMenuOpen: boolean; 
   setMobileMenuOpen: (open: boolean) => void;
   apiConnected: boolean;
@@ -298,7 +345,7 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
               <div className="bg-blue-600 p-2 rounded-lg">
                 <Package className="text-white" size={24} />
               </div>
-              <span className="text-xl font-bold text-gray-900">ChainGuard</span>
+              <span className="text-xl font-bold text-gray-900">ChainGuardia</span>
             </Link>
             {apiConnected && (
               <span className="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
