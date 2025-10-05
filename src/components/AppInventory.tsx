@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Application } from '../types';
 import Papa from 'papaparse';
-import { Upload, Plus, Trash2 } from 'lucide-react';
+import { Upload, Plus, Trash2, Package, Grid } from 'lucide-react';
 
 interface AppInventoryProps {
   applications: Application[];
@@ -66,165 +66,231 @@ export const AppInventory: React.FC<AppInventoryProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Application Inventory</h2>
-        <div className="flex gap-2">
-          <label className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-            <Upload size={18} />
-            Import CSV
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </label>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            <Plus size={18} />
-            Add App
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 px-4 py-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header with Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-12">
+          <div>
+            <h1 className="text-5xl font-bold text-white mb-3 tracking-tight">
+              Application Inventory
+            </h1>
+            <p className="text-slate-400 font-light">
+              Track and monitor your software stack
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="group bg-blue-500/10 border border-blue-500/30 hover:bg-blue-500/20 hover:border-blue-400/50 text-blue-300 px-6 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 hover:scale-105 font-medium"
+            >
+              <Plus size={18} />
+              Add App
+            </button>
+            <label className="cursor-pointer group bg-green-500/10 border border-green-500/30 hover:bg-green-500/20 hover:border-green-400/50 text-green-300 px-6 py-3 rounded-xl flex items-center gap-2 transition-all duration-200 hover:scale-105">
+              <Upload size={18} />
+              <span className="font-medium">Import CSV</span>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </label>
+          </div>
         </div>
-      </div>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                App Name *
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
+        {/* Add Form */}
+        {showForm && (
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 mb-8 animate-in fade-in duration-300">
+            <h3 className="text-xl font-semibold text-white mb-6 tracking-tight">Add New Application</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    App Name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+                    placeholder="e.g. Slack"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Vendor <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.vendor}
+                    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+                    placeholder="e.g. Slack Technologies"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Version
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.version}
+                    onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+                    placeholder="e.g. 4.35.0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+                    placeholder="e.g. Communication"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 hover:border-blue-400/50 text-blue-300 px-6 py-3 rounded-lg transition-all duration-200 font-medium hover:scale-105"
+                >
+                  Add Application
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-slate-300 px-6 py-3 rounded-lg transition-all duration-200 font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Applications Grid */}
+        {applications.length === 0 ? (
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center mx-auto mb-6">
+              <Package size={32} className="text-blue-400" />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Vendor *
+            <h3 className="text-2xl font-semibold text-white mb-2">No Applications Yet</h3>
+            <p className="text-slate-400 font-light mb-6">Start by adding your first application to track vulnerabilities</p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => setShowForm(true)}
+                className="bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-300 px-6 py-3 rounded-lg transition-all duration-200 font-medium hover:scale-105"
+              >
+                Add Manually
+              </button>
+              <label className="cursor-pointer bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 text-green-300 px-6 py-3 rounded-lg transition-all duration-200 font-medium hover:scale-105">
+                Import CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
               </label>
-              <input
-                type="text"
-                value={formData.vendor}
-                onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Version
-              </label>
-              <input
-                type="text"
-                value={formData.version}
-                onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
-              <input
-                type="text"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
             </div>
           </div>
-          <div className="flex gap-2 mt-4">
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
-            >
-              Add Application
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md transition-colors"
-            >
-              Cancel
-            </button>
+        ) : (
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
+            {/* Table Header */}
+            <div className="bg-white/5 border-b border-white/10 px-6 py-4">
+              <div className="flex items-center gap-2 text-slate-400">
+                <Grid size={18} />
+                <span className="font-semibold">{applications.length} Applications</span>
+              </div>
+            </div>
+            
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-white/5 border-b border-white/10">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Application
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Vendor
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Version
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {applications.map((app) => (
+                    <tr key={app.id} className="group hover:bg-white/5 transition-colors duration-200">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+                            <Package size={16} className="text-blue-400" />
+                          </div>
+                          <span className="font-semibold text-white">{app.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-300 font-light">
+                        {app.vendor}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-sm">
+                          {app.version || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-300 font-light">
+                        {app.category || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => onRemoveApplication(app.id)}
+                          className="p-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/20 hover:scale-110 transition-all duration-200"
+                          title="Remove application"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </form>
-      )}
+        )}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Application
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Vendor
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Version
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Category
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {applications.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                  No applications added yet. Click "Add App" or "Import CSV" to get started.
-                </td>
-              </tr>
-            ) : (
-              applications.map((app) => (
-                <tr key={app.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                    {app.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                    {app.vendor}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                    {app.version || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                    {app.category || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => onRemoveApplication(app.id)}
-                      className="text-red-600 hover:text-red-800 transition-colors"
-                      title="Remove application"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="font-semibold text-blue-900 mb-2">CSV Format Example:</h3>
-        <p className="text-sm text-blue-800 font-mono">
-          name,vendor,version,category<br />
-          Slack,Slack Technologies,4.35.0,Communication<br />
-          Zoom,Zoom Video Communications,5.15.5,Video Conferencing
-        </p>
+        {/* CSV Format Help Card */}
+        <div className="bg-blue-500/10 backdrop-blur-sm border border-blue-500/20 rounded-xl p-8">
+          <h3 className="text-lg font-semibold text-white mb-4 tracking-tight">
+            CSV Import Format
+          </h3>
+          <p className="text-sm text-slate-300 font-light mb-4">
+            Upload a CSV file with the following columns to bulk import applications:
+          </p>
+          <div className="bg-slate-950/50 border border-white/10 rounded-lg p-4 font-mono text-sm">
+            <div className="text-blue-300 mb-2">name,vendor,version,category</div>
+            <div className="text-slate-400">Slack,Slack Technologies,4.35.0,Communication</div>
+            <div className="text-slate-400">Zoom,Zoom Video Communications,5.15.5,Video Conferencing</div>
+          </div>
+          <p className="text-xs text-slate-500 mt-4 font-light">
+            <span className="text-red-400">*</span> Name and vendor are required fields. Version and category are optional.
+          </p>
+        </div>
       </div>
     </div>
   );
 };
+
