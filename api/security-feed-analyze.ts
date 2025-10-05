@@ -8,12 +8,14 @@ const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 async function listAvailableModels() {
   if (!GEMINI_API_KEY) return null;
   try {
-    const res = await fetch('https://generativelanguage.googleapis.com/v1/models', {
-      headers: { Authorization: `Bearer ${GEMINI_API_KEY}` }
-    });
+    // Gemini REST API uses query param ?key= instead of Authorization header
+    const url = `https://generativelanguage.googleapis.com/v1/models?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const res = await fetch(url);
     if (!res.ok) {
       const txt = await res.text();
-      throw new Error(`ListModels failed: ${res.status} ${res.statusText} ${txt}`);
+      const errMsg = `ListModels failed: ${res.status} ${res.statusText} - ${txt}`;
+      console.error(errMsg);
+      throw new Error(errMsg);
     }
     const json = await res.json();
     return json;
@@ -102,7 +104,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
   // Choose model via env or default
-  const requestedModel = process.env.GENERATIVE_MODEL || 'gemini-pro';
+  const requestedModel = process.env.GENERATIVE_MODEL || "models/gemini-2.5-flash-lite";
 
     // Attempt to instantiate and call the model, but handle "model not found" gracefully
     let model;
@@ -126,19 +128,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // If API returns 404 for model or version mismatch
       const isNotFound = err?.message && String(err.message).includes('404');
       if (isNotFound) {
-        try {
-          const list = await listAvailableModels();
+        const list = await listAvailableModels();
+        if (list && list.models) {
           return res.status(502).json({
             error: 'Generative model request failed',
             details: err?.message || String(err),
-            availableModels: list?.models || list
+            hint: `Set GENERATIVE_MODEL env var to a supported model name from the list below`,
+            availableModels: list.models.map((m: any) => m.name || m)
           });
-        } catch (listErr: any) {
-          console.error('Failed to list models after 404:', listErr);
+        } else {
           return res.status(502).json({
             error: 'Generative model request failed',
             details: err?.message || String(err),
-            availableModelsError: listErr?.message || String(listErr)
+            hint: 'Check that GEMINI_API_KEY is valid and has access to the Gemini API. Visit https://ai.google.dev/ to verify your key and quota.'
           });
         }
       }
