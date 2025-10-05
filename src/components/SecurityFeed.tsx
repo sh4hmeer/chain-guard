@@ -275,7 +275,7 @@ export default function SecurityFeed() {
                             ) : (
                               <>
                                 <Sparkles size={16} className="group-hover:rotate-12 transition-transform duration-200" />
-                                AI Analysis
+                                Get Insights
                               </>
                             )}
                           </button>
@@ -292,7 +292,7 @@ export default function SecurityFeed() {
                             ) : (
                               <>
                                 <ChevronDown size={16} />
-                                View Analysis
+                                View Insights
                               </>
                             )}
                           </button>
