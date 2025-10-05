@@ -5,10 +5,11 @@ import { VulnerabilityList } from './components/VulnerabilityList';
 import { DashboardOverview } from './components/DashboardOverview';
 import { AccountView } from './components/AccountView';
 import { AuthCallback } from './components/AuthCallback';
+import SecurityFeed from './components/SecurityFeed';
 import { Application, Vulnerability, DashboardStats } from './types';
 import { getMockData, getVulnerabilities } from './services/vulnerabilityService';
 import { applicationApi } from './services/apiService';
-import { LayoutDashboard, Package, AlertTriangle, Menu, X, User, LogOut, LogIn } from 'lucide-react';
+import { LayoutDashboard, Package, AlertTriangle, Menu, X, User, LogOut, LogIn, Shield } from 'lucide-react';
 import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
 import { setAuthTokenProvider } from './services/apiService';
 
@@ -220,6 +221,14 @@ function App() {
                   />
                 }
               />
+              <Route
+                path="/security-feed"
+                element={
+                  <Protect
+                    Comp={() => <SecurityFeed />}
+                  />
+                }
+              />
               <Route 
                 path="/callback"
                 element={<AuthCallback />}
@@ -268,6 +277,7 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/applications', label: 'Applications', icon: Package },
     { path: '/vulnerabilities', label: 'Vulnerabilities', icon: AlertTriangle },
+    { path: '/security-feed', label: 'Security Feed', icon: Shield },
   ];
 
   const isActive = (path: string) => location.pathname === path;
