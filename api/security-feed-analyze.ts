@@ -1,9 +1,27 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { jwtVerify, importJWK as importJWKFromJose } from 'jose';
+// import { jwtVerify, importJWK as importJWKFromJose } from 'jose';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+
+async function listAvailableModels() {
+  if (!GEMINI_API_KEY) return null;
+  try {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1/models', {
+      headers: { Authorization: `Bearer ${GEMINI_API_KEY}` }
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`ListModels failed: ${res.status} ${res.statusText} ${txt}`);
+    }
+    const json = await res.json();
+    return json;
+  } catch (err) {
+    console.error('listAvailableModels error:', err);
+    return null;
+  }
+}
 
 interface SecurityArticle {
   id: string;
@@ -83,8 +101,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Choose model via env or default
-    const requestedModel = 'gemini-1.5-flash';
+  // Choose model via env or default
+  const requestedModel = process.env.GENERATIVE_MODEL || 'gemini-pro';
 
     // Attempt to instantiate and call the model, but handle "model not found" gracefully
     let model;
@@ -105,7 +123,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       result = await model.generateContent(prompt);
     } catch (err: any) {
       console.error('Model generation error:', err);
-      // If API returns 404 for model or version mismatch surface it to client
+      // If API returns 404 for model or version mismatch
+      const isNotFound = err?.message && String(err.message).includes('404');
+      if (isNotFound) {
+        try {
+          const list = await listAvailableModels();
+          return res.status(502).json({
+            error: 'Generative model request failed',
+            details: err?.message || String(err),
+            availableModels: list?.models || list
+          });
+        } catch (listErr: any) {
+          console.error('Failed to list models after 404:', listErr);
+          return res.status(502).json({
+            error: 'Generative model request failed',
+            details: err?.message || String(err),
+            availableModelsError: listErr?.message || String(listErr)
+          });
+        }
+      }
+
       return res.status(502).json({
         error: 'Generative model request failed',
         details: err?.message || String(err)
