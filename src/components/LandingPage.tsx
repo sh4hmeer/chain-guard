@@ -45,7 +45,7 @@ export function LandingPage() {
           {/* Minimal feature cards - refined spacing */}
           <div className="mt-20 grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-3 mx-auto">
             {[
-              ['1.Add Applications', 'List tools and services'],
+              ['1. Add Applications', 'List tools and services'],
               ['2. View Vulnerabilities', 'Threats exposed and summarized'],
               ['3. Explore Insights', 'Concepts explained simply.'],
               
