@@ -24,7 +24,7 @@ export default async function handler(
 
   return res.status(200).json({
     status: 'ok',
-    message: 'ChainGuard API is running',
+    message: 'ChainGuardia API is running',
     timestamp: new Date().toISOString(),
   });
 }

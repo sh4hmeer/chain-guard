@@ -239,7 +239,7 @@ function App() {
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading ChainGuard...</p>
+              <p className="text-gray-600">Loading ChainGuardia...</p>
             </div>
           </div>
         ) : (
@@ -345,7 +345,7 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
               <div className="bg-blue-600 p-2 rounded-lg">
                 <Package className="text-white" size={24} />
               </div>
-              <span className="text-xl font-bold text-gray-900">ChainGuard</span>
+              <span className="text-xl font-bold text-gray-900">ChainGuardia</span>
             </Link>
             {apiConnected && (
               <span className="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">

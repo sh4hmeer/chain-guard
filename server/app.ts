@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
-    message: 'ChainGuard API is running (Local Development)',
+    message: 'ChainGuardia API is running (Local Development)',
     timestamp: new Date().toISOString(),
   });
 });
