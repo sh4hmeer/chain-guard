@@ -1,6 +1,5 @@
 import { DashboardStats, Vulnerability } from '../types';
 import { Shield, AlertTriangle, Activity, TrendingUp, Loader2 } from 'lucide-react';
-import SecurityFeed from './SecurityFeed';
 
 interface DashboardOverviewProps {
   stats: DashboardStats;

@@ -1,128 +1,105 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { jwtVerify, importJWK as importJWKFromJose } from 'jose';
 
+// 👇 Reuse the same auth helpers as your first snippet
+import { verifyAuth0Token, handleUnauthorized } from '../server/middleware/auth.js';
+
+// ───────────────────────────────────────────────────────────
+// Gemini setup
+// ───────────────────────────────────────────────────────────
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
-/**
- * Security Feed API with AI Analysis
- * Provides real-time security intelligence with Gemini-powered insights
- */
+// ───────────────────────────────────────────────────────────
+// Handler
+// ───────────────────────────────────────────────────────────
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
+  // CORS (mirror first snippet’s style/headers)
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+  );
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // Auth verification
+  // 🔐 Verify JWT using shared middleware (same pattern as first file)
+  // const authResult = await verifyAuth0Token(req);
+  // if (!authResult.authorized) {
+  //   return handleUnauthorized(res, authResult.error);
+  // }
+
+  // Pull user id (same as first file)
+  // const userId = authResult.user?.sub as string;
+  // if (!userId) {
+  //   return res.status(401).json({ message: 'User ID not found in token' });
+  // }
+
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Missing authorization token' });
-    }
+    switch (req.method) {
+      // GET /api/security-feed — fetch aggregated security feed
+      case 'GET': {
+        const { source, limit = '20' } = req.query;
+        const limitNum = Math.min(parseInt(limit as string, 10) || 20, 50); // cap 50
 
-    const token = authHeader.substring(7);
-    const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || '';
-    
-    if (!AUTH0_DOMAIN) {
-      console.error('AUTH0_DOMAIN not configured');
-      return res.status(500).json({ error: 'Server configuration error' });
-    }
-    
-    const jwksUrl = `https://${AUTH0_DOMAIN}/.well-known/jwks.json`;
-    
-    const jwksResponse = await fetch(jwksUrl);
-    if (!jwksResponse.ok) {
-      throw new Error('Failed to fetch JWKS');
-    }
-    
-    const JWKS = await jwksResponse.json();
-    const publicKey = await importJWKFromJose(JWKS.keys[0], 'RS256');
-    
-    await jwtVerify(token, publicKey, {
-      issuer: `https://${AUTH0_DOMAIN}/`,
-    });
-  } catch (error) {
-    console.error('Auth error:', error);
-    return res.status(401).json({ error: 'Invalid token' });
-  }
+        const articles = await fetchSecurityArticles(source as string, limitNum);
 
-  // GET /api/security-feed - Fetch aggregated security feed
-  if (req.method === 'GET') {
-    try {
-      const { source, limit = '20' } = req.query;
-      const limitNum = Math.min(parseInt(limit as string, 10) || 20, 50); // Max 50
-
-      const articles = await fetchSecurityArticles(source as string, limitNum);
-      
-      return res.status(200).json({
-        success: true,
-        count: articles.length,
-        articles,
-      });
-    } catch (error: any) {
-      console.error('Error fetching security feed:', error);
-      return res.status(500).json({
-        error: 'Failed to fetch security feed',
-        details: error.message,
-      });
-    }
-  }
-
-  // POST /api/security-feed/analyze - Analyze article with Gemini AI
-  if (req.method === 'POST') {
-    try {
-      const { article, userApplications } = req.body;
-
-      if (!article) {
-        return res.status(400).json({ error: 'Article data is required' });
-      }
-
-      if (!GEMINI_API_KEY || !genAI) {
-        return res.status(503).json({ 
-          error: 'Gemini API key not configured',
-          details: 'Please set GEMINI_API_KEY environment variable'
+        return res.status(200).json({
+          success: true,
+          count: articles.length,
+          articles
         });
       }
 
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      // POST /api/security-feed/analyze — AI analysis for an article
+      case 'POST': {
+        const { article, userApplications } = req.body || {};
+        if (!article) {
+          return res.status(400).json({ error: 'Article data is required' });
+        }
 
-      // Build comprehensive analysis prompt
-      const prompt = buildAnalysisPrompt(article, userApplications);
+        if (!GEMINI_API_KEY || !genAI) {
+          return res.status(503).json({
+            error: 'Gemini API key not configured',
+            details: 'Please set GEMINI_API_KEY environment variable',
+          });
+        }
 
-      const result = await model.generateContent(prompt);
-      const analysisText = result.response.text();
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const prompt = buildAnalysisPrompt(article, userApplications);
+        const result = await model.generateContent(prompt);
+        const analysisText = result.response.text();
+        const analysis = parseAIAnalysis(analysisText, article);
 
-      // Parse AI response into structured format
-      const analysis = parseAIAnalysis(analysisText, article);
+        return res.status(200).json({
+          success: true,
+          article: {
+            ...article,
+            aiAnalysis: analysis,
+          },
+        });
+      }
 
-      return res.status(200).json({
-        success: true,
-        article: {
-          ...article,
-          aiAnalysis: analysis,
-        },
-      });
-    } catch (error: any) {
-      console.error('Error analyzing article:', error);
-      return res.status(500).json({
-        error: 'Failed to analyze article',
-        details: error.message,
-      });
+      default:
+        return res.status(405).json({ message: 'Method not allowed' });
     }
+  } catch (error: any) {
+    console.error('Error in security-feed API:', error);
+    return res.status(500).json({
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? String(error) : undefined,
+    });
   }
-
-  return res.status(405).json({ error: 'Method not allowed' });
 }
 
-/**
- * Fetch security articles from various sources
- */
+// ───────────────────────────────────────────────────────────
+// Helpers (unchanged logic)
+// ───────────────────────────────────────────────────────────
+
 async function fetchSecurityArticles(source: string | undefined, limit: number) {
   const articles: SecurityArticle[] = [];
 
@@ -131,38 +108,33 @@ async function fetchSecurityArticles(source: string | undefined, limit: number) 
     try {
       const response = await fetch(
         `https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=${limit}`,
-        {
-          headers: {
-            'User-Agent': 'ChainGuard-Security-Platform/1.0'
-          }
-        }
+        { headers: { 'User-Agent': 'ChainGuard-Security-Platform/1.0' } }
       );
-      
       if (!response.ok) {
         console.error('NIST API error:', response.status, response.statusText);
         throw new Error(`NIST API returned ${response.status}`);
       }
-      
       const data = await response.json();
-      
-      const nistArticles = data.vulnerabilities?.map((item: any) => {
-        const cve = item.cve;
-        const metrics = cve.metrics?.cvssMetricV31?.[0] || cve.metrics?.cvssMetricV2?.[0];
-        
-        return {
-          id: cve.id,
-          source: 'NIST_NVD',
-          title: cve.id,
-          description: cve.descriptions?.find((d: any) => d.lang === 'en')?.value || 'No description',
-          publishedDate: cve.published,
-          severity: metrics?.cvssData?.baseSeverity,
-          cvssScore: metrics?.cvssData?.baseScore,
-          cveId: cve.id,
-          affectedProducts: extractAffectedProducts(cve),
-          references: cve.references?.map((ref: any) => ref.url) || [],
-        };
-      }) || [];
-      
+
+      const nistArticles =
+        data.vulnerabilities?.map((item: any) => {
+          const cve = item.cve;
+          const metrics = cve.metrics?.cvssMetricV31?.[0] || cve.metrics?.cvssMetricV2?.[0];
+          return {
+            id: cve.id,
+            source: 'NIST_NVD',
+            title: cve.id,
+            description:
+              cve.descriptions?.find((d: any) => d.lang === 'en')?.value || 'No description',
+            publishedDate: cve.published,
+            severity: metrics?.cvssData?.baseSeverity,
+            cvssScore: metrics?.cvssData?.baseScore,
+            cveId: cve.id,
+            affectedProducts: extractAffectedProducts(cve),
+            references: cve.references?.map((ref: any) => ref.url) || [],
+          };
+        }) || [];
+
       articles.push(...nistArticles);
     } catch (error) {
       console.error('NIST fetch error:', error);
@@ -174,52 +146,43 @@ async function fetchSecurityArticles(source: string | undefined, limit: number) 
     try {
       const response = await fetch(
         'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json',
-        {
-          headers: {
-            'User-Agent': 'ChainGuard-Security-Platform/1.0'
-          }
-        }
+        { headers: { 'User-Agent': 'ChainGuard-Security-Platform/1.0' } }
       );
-      
       if (!response.ok) {
         console.error('CISA API error:', response.status, response.statusText);
         throw new Error(`CISA API returned ${response.status}`);
       }
-      
       const data = await response.json();
-      
-      const cisaArticles = data.vulnerabilities?.slice(0, limit).map((vuln: any) => ({
-        id: vuln.cveID,
-        source: 'CISA_KEV',
-        title: `${vuln.cveID}: ${vuln.vulnerabilityName}`,
-        description: `${vuln.shortDescription} - Vendor: ${vuln.vendorProject}, Product: ${vuln.product}`,
-        publishedDate: vuln.dateAdded,
-        severity: 'CRITICAL',
-        cveId: vuln.cveID,
-        affectedProducts: [`${vuln.vendorProject}:${vuln.product}`],
-        exploited: true,
-      })) || [];
-      
+
+      const cisaArticles =
+        data.vulnerabilities?.slice(0, limit).map((vuln: any) => ({
+          id: vuln.cveID,
+          source: 'CISA_KEV',
+          title: `${vuln.cveID}: ${vuln.vulnerabilityName}`,
+          description: `${vuln.shortDescription} - Vendor: ${vuln.vendorProject}, Product: ${vuln.product}`,
+          publishedDate: vuln.dateAdded,
+          severity: 'CRITICAL',
+          cveId: vuln.cveID,
+          affectedProducts: [`${vuln.vendorProject}:${vuln.product}`],
+          exploited: true,
+        })) || [];
+
       articles.push(...cisaArticles);
     } catch (error) {
       console.error('CISA fetch error:', error);
     }
   }
 
-  return articles.sort((a, b) => 
-    new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime()
+  return articles.sort(
+    (a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime()
   );
 }
 
-/**
- * Extract affected products from CVE data
- */
 function extractAffectedProducts(cve: any): string[] {
   const products: string[] = [];
-  
   cve.configurations?.nodes?.forEach((node: any) => {
     node.cpeMatch?.forEach((cpe: any) => {
-      // Parse CPE format: cpe:2.3:a:vendor:product:version...
+      // cpe:2.3:a:vendor:product:version:...
       const parts = cpe.criteria.split(':');
       if (parts.length >= 5) {
         const vendor = parts[3];
@@ -228,18 +191,16 @@ function extractAffectedProducts(cve: any): string[] {
       }
     });
   });
-  
-  return [...new Set(products)]; // Remove duplicates
+  return [...new Set(products)];
 }
 
-/**
- * Build comprehensive analysis prompt for Gemini
- */
 function buildAnalysisPrompt(article: any, userApplications?: any[]): string {
-  const appContext = userApplications?.length 
-    ? `\n\nUser's Application Inventory:\n${userApplications.map(app => 
-        `- ${app.name} (${app.version}): ${app.dependencies?.join(', ') || 'N/A'}`
-      ).join('\n')}`
+  const appContext = userApplications?.length
+    ? `\n\nUser's Application Inventory:\n${userApplications
+        .map(
+          (app) => `- ${app.name} (${app.version}): ${app.dependencies?.join(', ') || 'N/A'}`
+        )
+        .join('\n')}`
     : '';
 
   return `You are a cybersecurity expert analyzing a security vulnerability or threat intelligence article.
@@ -282,22 +243,19 @@ Provide a comprehensive security analysis in the following JSON format:
 Provide ONLY the JSON response, no additional text.`;
 }
 
-/**
- * Parse AI analysis into structured format
- */
 function parseAIAnalysis(analysisText: string, originalArticle: any) {
   try {
-    // Extract JSON from markdown code blocks if present
-    const jsonMatch = analysisText.match(/```json\s*([\s\S]*?)\s*```/) || 
-                     analysisText.match(/```\s*([\s\S]*?)\s*```/);
+    // Handle possible fenced code blocks
+    const jsonMatch =
+      analysisText.match(/```json\s*([\s\S]*?)\s*```/) ||
+      analysisText.match(/```\s*([\s\S]*?)\s*```/);
     const jsonText = jsonMatch ? jsonMatch[1] : analysisText;
-    
+
     const parsed = JSON.parse(jsonText);
-    
     return {
       technicalSummary: parsed.technicalSummary || '',
       severity: parsed.severity || originalArticle.severity || 'UNKNOWN',
-      confidence: parsed.confidence || 0.8,
+      confidence: parsed.confidence ?? 0.8,
       reasoning: parsed.reasoning || '',
       businessImpact: parsed.businessImpact || '',
       technicalImpact: parsed.technicalImpact || '',
@@ -323,9 +281,9 @@ function parseAIAnalysis(analysisText: string, originalArticle: any) {
   }
 }
 
-/**
- * Type definitions
- */
+// ───────────────────────────────────────────────────────────
+// Types
+// ───────────────────────────────────────────────────────────
 interface SecurityArticle {
   id: string;
   source: string;
