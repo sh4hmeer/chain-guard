@@ -103,7 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function fetchSecurityArticles(source: string | undefined, limit: number) {
   const articles: SecurityArticle[] = [];
 
-  // NIST NVD
+  // NIST NVD 
   if (!source || source === 'NIST_NVD') {
     try {
       const response = await fetch(
