@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
+import { AlertCircle } from 'lucide-react';
 
 export function AuthCallback() {
   const { isAuthenticated, isLoading, error } = useAuth0();
@@ -23,14 +24,16 @@ export function AuthCallback() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-          <div className="text-red-600 text-5xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Authentication Error</h2>
-          <p className="text-gray-600 mb-6">{error.message}</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
+        <div className="max-w-md w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-12 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center mx-auto mb-6">
+            <AlertCircle size={32} className="text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-3 tracking-tight">Authentication Error</h2>
+          <p className="text-slate-400 font-light mb-6">{error.message}</p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-3 bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-300 rounded-lg transition-all duration-200 font-medium hover:scale-105"
           >
             Return to Home
           </button>
@@ -40,16 +43,18 @@ export function AuthCallback() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
       <div className="text-center">
         <div className="relative">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          {/* Outer spinning ring */}
+          <div className="animate-spin rounded-full h-16 w-16 border-2 border-blue-500/20 border-t-blue-500 mx-auto mb-4 shadow-lg shadow-blue-500/20"></div>
+          {/* Inner pulsing glow */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-12 h-12 bg-white rounded-full"></div>
+            <div className="w-10 h-10 bg-blue-500/20 rounded-full animate-pulse" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Signing you in...</h2>
-        <p className="text-gray-600">Please wait while we complete your authentication</p>
+        <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">Signing you in...</h2>
+        <p className="text-slate-400 font-light">Please wait while we complete your authentication</p>
       </div>
     </div>
   );

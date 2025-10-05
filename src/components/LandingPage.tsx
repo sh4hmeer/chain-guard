@@ -1,16 +1,11 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import { useNavigate } from 'react-router-dom';
+import { Shield } from 'lucide-react';
 
 export function LandingPage() {
   const { loginWithRedirect, isAuthenticated } = useAuth0();
-  const navigate = useNavigate();
 
   const handleStart = () => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    } else {
-      loginWithRedirect();
-    }
+    loginWithRedirect();
   };
 
   return (
@@ -18,7 +13,11 @@ export function LandingPage() {
       {/* Minimal header - clean and refined */}
       <header className="relative z-20 flex items-center justify-start px-8 py-6">
         <div className="flex items-center gap-2.5 text-white/90">
-          <img src="/vite.svg" alt="logo" className="h-5 w-5" />
+          <div className="relative bg-gradient-to-br from-blue-500 to-blue-700 p-1.5 rounded-lg shadow-lg shadow-blue-500/30">
+            {/* Animated ring */}
+            <div className="absolute inset-0 rounded-lg bg-blue-400/20 animate-ping" style={{ animationDuration: '2s' }} />
+            <Shield className="relative text-white" size={20} />
+          </div>
           <span className="text-sm font-medium tracking-wide">ChainGuardia</span>
         </div>
       </header>
@@ -46,7 +45,7 @@ export function LandingPage() {
           {/* Minimal feature cards - refined spacing */}
           <div className="mt-20 grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-3 mx-auto">
             {[
-              ['1.Add Applications', 'List tools and services'],
+              ['1. Add Applications', 'List tools and services'],
               ['2. View Vulnerabilities', 'Threats exposed and summarized'],
               ['3. Explore Insights', 'Concepts explained simply.'],
               

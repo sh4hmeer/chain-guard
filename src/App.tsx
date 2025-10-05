@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { AppInventory } from './components/AppInventory';
 import { VulnerabilityList } from './components/VulnerabilityList';
@@ -14,6 +15,7 @@ import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
 import { setAuthTokenProvider } from './services/apiService';
 import { LandingPage } from './components/LandingPage';
 import VantaBackground from './components/VantaBackground';
+import { SplineBackground } from './components/SplineBackground';
 
   // Shows Vanta only on landing page (/)
   function LandingVanta() {
@@ -22,11 +24,34 @@ import VantaBackground from './components/VantaBackground';
     return <VantaBackground />;
   }
 
-  // Switches outer bg so Vanta is visible on landing page
+  // Switches outer bg so Vanta is visible on landing page, adds backdrop effects
   function BgSwitcher({ children }: { children: React.ReactNode }) {
     const { pathname } = useLocation();
-    const bg = pathname === '/' ? 'bg-transparent' : 'bg-gray-100';
-    return <div className={`min-h-screen ${bg}`}>{children}</div>;
+    const isLanding = pathname === '/';
+    
+    return (
+      <div className={`min-h-screen ${isLanding ? 'bg-transparent' : 'bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950'}`}>
+        {/* Animated gradient orbs for non-landing pages */}
+        {!isLanding && (
+          <>
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+              {/* Top right orb */}
+              <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" 
+                   style={{ animationDuration: '8s' }} />
+              {/* Bottom left orb */}
+              <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" 
+                   style={{ animationDuration: '10s', animationDelay: '2s' }} />
+              {/* Center accent */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-3xl animate-pulse" 
+                   style={{ animationDuration: '12s', animationDelay: '4s' }} />
+            </div>
+            {/* Spline animation layer */}
+            <SplineBackground />
+          </>
+        )}
+        {children}
+      </div>
+    );
   }
 
   // Redirect authenticated users from landing page to dashboard
@@ -225,7 +250,7 @@ function App() {
     <Router>
       <BgSwitcher>
       <LandingVanta />   {/* full-page background on landing page only */}
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen relative" style={{ zIndex: 10 }}>
           {isAuthenticated && (
           <Navigation
             mobileMenuOpen={mobileMenuOpen} 
@@ -238,12 +263,19 @@ function App() {
         {loading ? (
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading ChainGuardia...</p>
+              <div className="relative">
+                {/* Outer spinning ring */}
+                <div className="animate-spin rounded-full h-16 w-16 border-2 border-blue-500/20 border-t-blue-500 mx-auto mb-4 shadow-lg shadow-blue-500/20"></div>
+                {/* Inner pulsing glow */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-full animate-pulse" />
+                </div>
+              </div>
+              <p className="text-slate-300 font-light">Loading ChainGuardia...</p>
             </div>
           </div>
         ) : (
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <main className="relative">
             <Routes>
               <Route path="/" element={<LandingPageOrRedirect />} />
 
@@ -312,11 +344,20 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
   const { user, isAuthenticated, loginWithRedirect, logout } = useAuth0();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // Check if click is outside both the button container AND the dropdown
+      if (
+        userMenuRef.current && 
+        !userMenuRef.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
+      ) {
         setUserMenuOpen(false);
       }
     };
@@ -328,7 +369,7 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
   }, [userMenuOpen]);
   
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/applications', label: 'Applications', icon: Package },
     { path: '/vulnerabilities', label: 'Vulnerabilities', icon: AlertTriangle },
     { path: '/security-feed', label: 'Security Feed', icon: Shield },
@@ -337,78 +378,98 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="bg-white shadow-lg">
+    <nav className="relative bg-slate-950/80 backdrop-blur-md border-b border-white/10 shadow-2xl shadow-blue-500/10" style={{ zIndex: 20 }}>
+      {/* Subtle animated gradient line */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent animate-pulse" 
+           style={{ animationDuration: '3s' }} />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <Package className="text-white" size={24} />
+            <Link to="/" className="group flex items-center gap-2 transition-transform duration-200 hover:scale-105">
+              <div className="relative bg-gradient-to-br from-blue-500 to-blue-700 p-2 rounded-lg shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all duration-300">
+                {/* Animated ring */}
+                <div className="absolute inset-0 rounded-lg bg-blue-400/20 animate-ping" style={{ animationDuration: '2s' }} />
+                <Shield className="relative text-white" size={24} />
               </div>
-              <span className="text-xl font-bold text-gray-900">ChainGuardia</span>
-            </Link>
-            {apiConnected && (
-              <span className="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
-                Online
+              <span className="text-xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                ChainGuardia
               </span>
+            </Link>
+            {/* Subtle status indicator */}
+            {apiConnected && (
+              <div className="ml-3 w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50" title="Online" />
             )}
             {!apiConnected && (
-              <span className="ml-3 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-semibold">
-                Offline Mode
-              </span>
+              <div className="ml-3 w-2 h-2 bg-yellow-400 rounded-full shadow-lg shadow-yellow-400/50" title="Offline Mode" />
             )}
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-4">
+          <div className="hidden md:flex md:items-center md:space-x-2">
             {navItems.map(({ path, label, icon: Icon }) => (
               <Link
                 key={path}
                 to={path}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                className={`group relative flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
                   isActive(path)
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/30 text-blue-300 shadow-lg shadow-blue-500/20'
+                    : 'text-slate-300 hover:bg-white/5 hover:text-white border border-transparent hover:border-white/10'
                 }`}
               >
-                <Icon size={18} />
-                {label}
+                {isActive(path) && (
+                  <div className="absolute inset-0 rounded-lg bg-blue-400/10 animate-pulse" style={{ animationDuration: '2s' }} />
+                )}
+                <Icon size={18} className={`relative transition-transform duration-200 ${isActive(path) ? '' : 'group-hover:scale-110'}`} />
+                <span className="relative font-medium">{label}</span>
               </Link>
             ))}
             
             {/* User Menu */}
             {isAuthenticated && user ? (
-              <div className="relative" ref={userMenuRef}>
+              <div className="relative ml-2" ref={userMenuRef}>
                 <button
+                  ref={buttonRef}
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="group flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
                 >
                   {user.picture ? (
                     <img
                       src={user.picture}
                       alt={user.name || 'User'}
-                      className="w-8 h-8 rounded-full border-2 border-gray-300"
+                      className="w-8 h-8 rounded-full border-2 border-blue-500/50 group-hover:border-blue-400 transition-colors duration-200 shadow-lg"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/30">
                       <User size={16} className="text-white" />
                     </div>
                   )}
-                  <span className="text-sm font-medium text-gray-700 max-w-[120px] truncate">
+                  <span className="text-sm font-medium text-slate-200 max-w-[120px] truncate">
                     {user.name || user.email || 'User'}
                   </span>
                 </button>
                 
-                {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm font-semibold text-gray-900">{user.name || 'User'}</p>
-                      <p className="text-xs text-gray-600 truncate">{user.email}</p>
+                {/* Render dropdown using Portal to escape nav container */}
+                {userMenuOpen && createPortal(
+                  <div 
+                    ref={dropdownRef}
+                    className="fixed w-64 bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/10 py-2"
+                    style={{ 
+                      top: '4rem',
+                      right: '1rem',
+                      zIndex: 99999,
+                      position: 'fixed',
+                      animation: 'fadeIn 0.2s ease-out'
+                    }}
+                  >
+                    <div className="px-4 py-3 border-b border-white/10">
+                      <p className="text-sm font-semibold text-white">{user.name || 'User'}</p>
+                      <p className="text-xs text-slate-400 truncate">{user.email}</p>
                     </div>
                     <Link
                       to="/account"
                       onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
                     >
                       <User size={16} />
                       My Account
@@ -418,21 +479,23 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
                         setUserMenuOpen(false);
                         logout({ logoutParams: { returnTo: window.location.origin } });
                       }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
                     >
                       <LogOut size={16} />
                       Sign Out
                     </button>
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             ) : (
               <button
                 onClick={() => loginWithRedirect()}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                className="group relative ml-2 flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105"
               >
-                <LogIn size={18} />
-                Sign In
+                <div className="absolute inset-0 rounded-lg bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                <LogIn size={18} className="relative" />
+                <span className="relative">Sign In</span>
               </button>
             )}
           </div>
@@ -441,7 +504,7 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-gray-700 hover:text-gray-900"
+              className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-200"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -451,75 +514,75 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200">
+        <div className="md:hidden border-t border-white/10 bg-slate-950/95 backdrop-blur-xl animate-in slide-in-from-top duration-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navItems.map(({ path, label, icon: Icon }) => (
               <Link
                 key={path}
                 to={path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 ${
                   isActive(path)
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 border border-blue-500/30 text-blue-300 shadow-lg shadow-blue-500/20'
+                    : 'text-slate-300 hover:bg-white/5 hover:text-white border border-transparent hover:border-white/10'
                 }`}
               >
                 <Icon size={18} />
-                {label}
+                <span className="font-medium">{label}</span>
               </Link>
             ))}
             
             {/* Mobile User Menu */}
             {isAuthenticated && user ? (
               <>
-                <div className="border-t border-gray-200 mt-2 pt-2">
-                  <div className="px-3 py-2">
+                <div className="border-t border-white/10 mt-2 pt-2">
+                  <div className="px-3 py-3 bg-white/5 rounded-lg mx-2 mb-2">
                     <div className="flex items-center gap-3">
                       {user.picture ? (
                         <img
                           src={user.picture}
                           alt={user.name || 'User'}
-                          className="w-10 h-10 rounded-full border-2 border-gray-300"
+                          className="w-10 h-10 rounded-full border-2 border-blue-500/50 shadow-lg"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/30">
                           <User size={20} className="text-white" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{user.name || 'User'}</p>
-                        <p className="text-xs text-gray-600 truncate">{user.email}</p>
+                        <p className="text-sm font-semibold text-white truncate">{user.name || 'User'}</p>
+                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
                       </div>
                     </div>
                   </div>
                   <Link
                     to="/account"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:bg-white/5 hover:text-white border border-transparent hover:border-white/10 transition-all duration-200"
                   >
                     <User size={18} />
-                    My Account
+                    <span className="font-medium">My Account</span>
                   </Link>
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
                       logout({ logoutParams: { returnTo: window.location.origin } });
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 border border-transparent hover:border-red-500/30 transition-all duration-200"
                   >
                     <LogOut size={18} />
-                    Sign Out
+                    <span className="font-medium">Sign Out</span>
                   </button>
                 </div>
               </>
             ) : (
-              <div className="border-t border-gray-200 mt-2 pt-2">
+              <div className="border-t border-white/10 mt-2 pt-2">
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
                     loginWithRedirect();
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold shadow-lg shadow-blue-500/30"
                 >
                   <LogIn size={18} />
                   Sign In
