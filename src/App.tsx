@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { AppInventory } from './components/AppInventory';
 import { VulnerabilityList } from './components/VulnerabilityList';
 import { DashboardOverview } from './components/DashboardOverview';
@@ -27,6 +27,28 @@ import VantaBackground from './components/VantaBackground';
     const { pathname } = useLocation();
     const bg = pathname === '/' ? 'bg-transparent' : 'bg-gray-100';
     return <div className={`min-h-screen ${bg}`}>{children}</div>;
+  }
+
+  // Redirect authenticated users from landing page to dashboard
+  function LandingPageOrRedirect() {
+    const { isAuthenticated, isLoading } = useAuth0();
+    
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+    
+    if (isAuthenticated) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    
+    return <LandingPage />;
   }
 
 function App() {
@@ -223,7 +245,7 @@ function App() {
         ) : (
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Routes>
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<LandingPageOrRedirect />} />
 
               <Route
                 path="/dashboard"
