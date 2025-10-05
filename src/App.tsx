@@ -15,6 +15,7 @@ import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
 import { setAuthTokenProvider } from './services/apiService';
 import { LandingPage } from './components/LandingPage';
 import VantaBackground from './components/VantaBackground';
+import { SplineBackground } from './components/SplineBackground';
 
   // Shows Vanta only on landing page (/)
   function LandingVanta() {
@@ -32,17 +33,21 @@ import VantaBackground from './components/VantaBackground';
       <div className={`min-h-screen ${isLanding ? 'bg-transparent' : 'bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950'}`}>
         {/* Animated gradient orbs for non-landing pages */}
         {!isLanding && (
-          <div className="fixed inset-0 overflow-hidden pointer-events-none">
-            {/* Top right orb */}
-            <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" 
-                 style={{ animationDuration: '8s' }} />
-            {/* Bottom left orb */}
-            <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" 
-                 style={{ animationDuration: '10s', animationDelay: '2s' }} />
-            {/* Center accent */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-3xl animate-pulse" 
-                 style={{ animationDuration: '12s', animationDelay: '4s' }} />
-          </div>
+          <>
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+              {/* Top right orb */}
+              <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" 
+                   style={{ animationDuration: '8s' }} />
+              {/* Bottom left orb */}
+              <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" 
+                   style={{ animationDuration: '10s', animationDelay: '2s' }} />
+              {/* Center accent */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-3xl animate-pulse" 
+                   style={{ animationDuration: '12s', animationDelay: '4s' }} />
+            </div>
+            {/* Spline animation layer */}
+            <SplineBackground />
+          </>
         )}
         {children}
       </div>
@@ -245,7 +250,7 @@ function App() {
     <Router>
       <BgSwitcher>
       <LandingVanta />   {/* full-page background on landing page only */}
-      <div className="min-h-screen relative">
+      <div className="min-h-screen relative" style={{ zIndex: 10 }}>
           {isAuthenticated && (
           <Navigation
             mobileMenuOpen={mobileMenuOpen} 
@@ -373,7 +378,7 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="relative bg-slate-950/80 backdrop-blur-md border-b border-white/10 shadow-2xl shadow-blue-500/10">
+    <nav className="relative bg-slate-950/80 backdrop-blur-md border-b border-white/10 shadow-2xl shadow-blue-500/10" style={{ zIndex: 20 }}>
       {/* Subtle animated gradient line */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent animate-pulse" 
            style={{ animationDuration: '3s' }} />

@@ -6,7 +6,7 @@ export function AccountView() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 px-4 py-8 flex items-center justify-center">
+      <div className="min-h-screen px-4 py-8 flex items-center justify-center">
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-12 text-center max-w-md">
           <div className="w-16 h-16 rounded-full bg-slate-500/20 border border-slate-500/30 flex items-center justify-center mx-auto mb-6">
             <User size={32} className="text-slate-400" />
@@ -28,7 +28,7 @@ export function AccountView() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 px-4 py-8">
+    <div className="min-h-screen px-4 py-8">
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
         <div className="mb-12">
