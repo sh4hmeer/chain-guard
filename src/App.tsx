@@ -302,7 +302,7 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
             </Link>
             {apiConnected && (
               <span className="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
-                MongoDB Connected
+                Online
               </span>
             )}
             {!apiConnected && (
