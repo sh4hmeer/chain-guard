@@ -38,7 +38,7 @@ export function LandingPage() {
 
           <button
             onClick={handleStart}
-            className="px-10 py-3.5 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-medium rounded-lg hover:bg-white/20 hover:border-white/30 transition-all duration-300 shadow-lg"
+            className="px-12 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 active:scale-95 transition-all duration-200 shadow-xl shadow-blue-600/30 hover:shadow-2xl hover:shadow-blue-500/40 ring-2 ring-blue-500/50 hover:ring-blue-400/60"
           >
             {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
           </button>
