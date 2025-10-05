@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback} from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { AppInventory } from './components/AppInventory';
 import { VulnerabilityList } from './components/VulnerabilityList';
@@ -23,15 +23,15 @@ function App() {
   const { getAccessTokenSilently, isAuthenticated, user} = useAuth0();
 
   // Check API connection and load data
-
-  const initializeData = useCallback ( async () => {
+  useEffect(() => {
+    const initializeData = async () => {
       try {
-        // Public
+        // Public health check
         await applicationApi.healthCheck();
         setApiConnected(true);
   
         if (isAuthenticated) {
-          // protected
+          // Fetch protected user data
           const apps = await applicationApi.getAll();
           setApplications(apps);
           
@@ -49,7 +49,7 @@ function App() {
             setLoadingVulnerabilities(false);
           }
         } else {
-          // not logged in → demo mode with mock data
+          // Not logged in → demo mode with mock data
           const mock = getMockData([]);
           setApplications(mock.applications);
           setVulnerabilities(mock.vulnerabilities);
@@ -63,19 +63,26 @@ function App() {
       } finally {
         setLoading(false);
       }
-    },[]);
+    };
 
-
-  useEffect(() => {
     initializeData();
-  }, [initializeData, isAuthenticated, vulnerabilities, applications]);
+  }, [isAuthenticated]); // Only re-run when authentication status changes
 
 
 
-  // Re-fetch vulnerabilities when applications change
+  // Re-fetch vulnerabilities when applications are manually added/removed
+  // (not on initial load, which is handled by initializeData)
+  const applicationsRef = useRef<Application[]>(applications);
   useEffect(() => {
-    const refetchVulnerabilities = async () => {
-      if (applications.length > 0 && isAuthenticated) {
+    // Skip if this is the first render or applications are empty
+    if (applicationsRef.current.length === 0 || !isAuthenticated) {
+      applicationsRef.current = applications;
+      return;
+    }
+
+    // Only refetch if the number of applications actually changed
+    if (applicationsRef.current.length !== applications.length) {
+      const refetchVulnerabilities = async () => {
         setLoadingVulnerabilities(true);
         try {
           const vulns = await getVulnerabilities(applications, true);
@@ -85,12 +92,12 @@ function App() {
         } finally {
           setLoadingVulnerabilities(false);
         }
-      }
-    };
+      };
 
-    refetchVulnerabilities();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applications.length, isAuthenticated]);
+      refetchVulnerabilities();
+      applicationsRef.current = applications;
+    }
+  }, [applications, isAuthenticated]);
 
   useEffect(() => {
     setAuthTokenProvider(async () => {
