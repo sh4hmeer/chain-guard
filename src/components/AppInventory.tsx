@@ -75,7 +75,7 @@ export const AppInventory: React.FC<AppInventoryProps> = ({
               Application Inventory
             </h1>
             <p className="text-slate-400 font-light">
-              Track and monitor your software stack
+              Track and monitor your apps
             </p>
           </div>
           <div className="flex gap-3">
