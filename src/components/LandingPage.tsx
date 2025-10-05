@@ -32,7 +32,7 @@ export function LandingPage() {
             Stop Supply Chain Attacks Before They Spread
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-blue-100 drop-shadow-lg">
-            Monitor, analyze, and respond to vulnerabilities across your company's software stack — all in one dashboard.
+            Bridge the gap between cybersecurity experts and IT teams. Understand vulnerabilities in plain language.
           </p>
 
           <button
@@ -42,14 +42,14 @@ export function LandingPage() {
             {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
           </button>
 
-          {/* Feature Cards */}
+          {/* Feature Cards - Simple 3-Step Process */}
           <div className="mt-16 grid w-full max-w-4xl grid-cols-1 gap-6 md:grid-cols-3 mx-auto">
             {[
-              ['Live Vulnerability Tracking', 'Pulls data directly from NIST NVD and vendor advisories.'],
-              ['Centralized Inventory', 'Monitor all approved and shadow applications.'],
-              ['Proactive Alerts', 'Catch vulnerabilities before they affect production.'],
+              ['1. Add Your Applications', 'Simply list the software your team uses. No technical setup required.'],
+              ['2. View Vulnerabilities', 'See security issues explained in clear, everyday language.'],
+              ['3. Explore Insights', 'Get actionable recommendations anyone can understand and act on.'],
             ].map(([title, desc]) => (
-              <div key={title} className="rounded-2xl border border-blue-400/20 bg-slate-900/60 backdrop-blur-md p-6 shadow-2xl hover:bg-slate-900/80 transition-all duration-200">
+              <div key={title} className="rounded-2xl border border-blue-400/20 bg-slate-900/60 backdrop-blur-md p-6 shadow-2xl hover:bg-slate-900/80 transition-all duration-200 hover:border-blue-400/40">
                 <h3 className="text-lg font-semibold text-white">{title}</h3>
                 <p className="mt-2 text-sm text-blue-200">{desc}</p>
               </div>
