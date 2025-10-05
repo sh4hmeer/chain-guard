@@ -391,17 +391,12 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
                 ChainGuardia
               </span>
             </Link>
+            {/* Subtle status indicator */}
             {apiConnected && (
-              <span className="ml-3 px-3 py-1 bg-green-500/20 border border-green-500/30 text-green-300 text-xs rounded-full font-semibold flex items-center gap-1.5 animate-in fade-in duration-500">
-                <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                Online
-              </span>
+              <div className="ml-3 w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50" title="Online" />
             )}
             {!apiConnected && (
-              <span className="ml-3 px-3 py-1 bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs rounded-full font-semibold flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full" />
-                Offline Mode
-              </span>
+              <div className="ml-3 w-2 h-2 bg-yellow-400 rounded-full shadow-lg shadow-yellow-400/50" title="Offline Mode" />
             )}
           </div>
 
