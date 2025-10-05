@@ -15,17 +15,17 @@ import { setAuthTokenProvider } from './services/apiService';
 import { LandingPage } from './components/LandingPage';
 import VantaBackground from './components/VantaBackground';
 
-  // Shows Vanta only on /dashboard
-  function DashboardVanta() {
+  // Shows Vanta only on landing page (/)
+  function LandingVanta() {
     const { pathname } = useLocation();
-    if (!pathname.startsWith('/dashboard')) return null;
+    if (pathname !== '/') return null;
     return <VantaBackground />;
   }
 
-  // Switches outer bg so Vanta is visible on /dashboard
+  // Switches outer bg so Vanta is visible on landing page
   function BgSwitcher({ children }: { children: React.ReactNode }) {
     const { pathname } = useLocation();
-    const bg = pathname.startsWith('/dashboard') ? 'bg-transparent' : 'bg-gray-100';
+    const bg = pathname === '/' ? 'bg-transparent' : 'bg-gray-100';
     return <div className={`min-h-screen ${bg}`}>{children}</div>;
   }
 
@@ -202,7 +202,7 @@ function App() {
   return (
     <Router>
       <BgSwitcher>
-      <DashboardVanta />   {/* full-page background on /dashboard only */}
+      <LandingVanta />   {/* full-page background on landing page only */}
       <div className="min-h-screen bg-gray-100">
           {isAuthenticated && (
           <Navigation

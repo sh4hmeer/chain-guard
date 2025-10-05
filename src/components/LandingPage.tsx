@@ -14,12 +14,12 @@ export function LandingPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-b from-white to-gray-50">
-      {/* HEADER (Logo only) */}
-      <header className="flex items-center justify-start px-6 py-5">
-        <div className="flex items-center gap-2">
-          <img src="/vite.svg" alt="logo" className="h-6 w-6" />
-          <span className="text-lg font-semibold">ChainGuard</span>
+    <div className="relative flex min-h-screen flex-col overflow-hidden">
+      {/* HEADER (Logo only) - elevated above background */}
+      <header className="relative z-20 flex items-center justify-start px-6 py-5">
+        <div className="flex items-center gap-2 text-white">
+          <img src="/vite.svg" alt="logo" className="h-6 w-6 drop-shadow-lg" />
+          <span className="text-lg font-semibold drop-shadow-lg">ChainGuard</span>
         </div>
       </header>
 
@@ -28,16 +28,16 @@ export function LandingPage() {
 
         {/* content above the background, perfectly centered */}
         <div className="relative z-10 mx-auto max-w-6xl px-6 py-16 text-center">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+          <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl text-white drop-shadow-2xl">
             Stop Supply Chain Attacks Before They Spread
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-gray-600">
-            Monitor, analyze, and respond to vulnerabilities across your company’s software stack — all in one dashboard.
+          <p className="mx-auto mt-4 max-w-xl text-blue-100 drop-shadow-lg">
+            Monitor, analyze, and respond to vulnerabilities across your company's software stack — all in one dashboard.
           </p>
 
           <button
             onClick={handleStart}
-            className="mt-8 rounded-2xl bg-blue-600 px-8 py-3 font-semibold text-white shadow-md hover:bg-blue-700 transition"
+            className="mt-8 rounded-2xl bg-blue-600 px-8 py-3 font-semibold text-white shadow-2xl hover:bg-blue-500 hover:scale-105 transition-all duration-200 ring-2 ring-blue-400/50"
           >
             {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
           </button>
@@ -49,9 +49,9 @@ export function LandingPage() {
               ['Centralized Inventory', 'Monitor all approved and shadow applications.'],
               ['Proactive Alerts', 'Catch vulnerabilities before they affect production.'],
             ].map(([title, desc]) => (
-              <div key={title} className="rounded-2xl border bg-white/80 backdrop-blur-sm p-6 shadow-sm">
-                <h3 className="text-lg font-semibold">{title}</h3>
-                <p className="mt-2 text-sm text-gray-600">{desc}</p>
+              <div key={title} className="rounded-2xl border border-blue-400/20 bg-slate-900/60 backdrop-blur-md p-6 shadow-2xl hover:bg-slate-900/80 transition-all duration-200">
+                <h3 className="text-lg font-semibold text-white">{title}</h3>
+                <p className="mt-2 text-sm text-blue-200">{desc}</p>
               </div>
             ))}
           </div>
@@ -59,7 +59,7 @@ export function LandingPage() {
       </main>
 
       {/* FOOTER */}
-      <footer className="border-t bg-white py-4 text-center text-sm text-gray-500">
+      <footer className="relative z-20 border-t border-blue-900/30 bg-slate-950/80 backdrop-blur-sm py-4 text-center text-sm text-blue-300">
         © 2025 ChainGuard — Secure your software supply chain
       </footer>
     </div>

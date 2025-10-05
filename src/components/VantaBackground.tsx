@@ -21,13 +21,13 @@ function RotatingStars() {
   return (
     <group ref={group}>
       <Stars
-        radius={140}   // ⬅️ bigger starfield (was 90)
-        depth={80}
-        count={4000}
-        factor={3.4}
-        saturation={0}
-        fade
-        speed={0.7}
+        radius={180}      // Massive starfield for immersion
+        depth={100}       // Deep space feel
+        count={6000}      // Dense star population
+        factor={4.5}      // Larger, more visible stars
+        saturation={0}    // Pure white stars
+        fade              // Smooth fade at edges
+        speed={0.5}       // Gentle, calm movement
       />
     </group>
   );
@@ -35,19 +35,38 @@ function RotatingStars() {
 
 export default function Background3D() {
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none">
-      {/* Bigger BLUE glow centered behind the hero */}
-      <div className="absolute inset-0 bg-[radial-gradient(1200px_650px_at_50%_42%,rgba(59,130,246,0.35),transparent_75%)]" />
-      {/* Soft blue vignette to blend edges */}
-      <div className="absolute inset-0 bg-[radial-gradient(1600px_900px_at_50%_50%,rgba(96,165,250,0.18),transparent_80%)]" />
-      {/* Gentle top-to-bottom blue tint */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-50/30 via-transparent to-blue-100/20" />
+    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+      {/* Deep blue gradient base - creates depth */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900" />
+      
+      {/* Primary radial glow - vibrant blue accent */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_1400px_800px_at_50%_40%,rgba(59,130,246,0.25),transparent_70%)]" />
+      
+      {/* Secondary glow - cyan accent for dimension */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_1000px_600px_at_30%_60%,rgba(6,182,212,0.15),transparent_65%)]" />
+      
+      {/* Tertiary glow - purple accent for depth */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_900px_500px_at_70%_50%,rgba(147,51,234,0.12),transparent_60%)]" />
+      
+      {/* Subtle top vignette for polish */}
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-950/40 via-transparent to-transparent" />
+      
+      {/* Bottom fade for clean landing */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
 
-      <Canvas dpr={[1, 1.5]} gl={{ alpha: true, antialias: true }} camera={{ position: [0, 0, 1] }}>
-        {/* keep background transparent so gradients show */}
-        {/* optional: faint blue fog to subtly tint distant stars */}
-        <fog attach="fog" args={['#3b82f6', 1.5, 12]} />
-        <ambientLight intensity={0.6} />
+      <Canvas 
+        dpr={[1, 2]} 
+        gl={{ 
+          alpha: true, 
+          antialias: true,
+          powerPreference: "high-performance"
+        }} 
+        camera={{ position: [0, 0, 1], fov: 75 }}
+      >
+        {/* Atmospheric fog for depth - deep blue */}
+        <fog attach="fog" args={['#1e3a8a', 2, 15]} />
+        <ambientLight intensity={0.4} />
+        <pointLight position={[10, 10, 10]} intensity={0.3} color="#60a5fa" />
         <RotatingStars />
       </Canvas>
     </div>
