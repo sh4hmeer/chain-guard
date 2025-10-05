@@ -16,7 +16,7 @@ function RotatingStars() {
   useFrame((_: any, delta: number) => {
     if (!group.current) return;
     
-    // Use global mouse position instead of pointer from useThree
+    // Use global mouse position instead of pointer from useThrees
     const pointer = { x: globalMouse.x, y: globalMouse.y };
     
     // Calculate mouse velocity for more dynamic response
