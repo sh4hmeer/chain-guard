@@ -117,7 +117,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             Overview
           </h1>
           <p className="text-slate-400 font-light">
-            Real-time security intelligence for your stack
+            Total visibility into your stack
           </p>
         </div>
 

@@ -266,7 +266,7 @@ function App() {
               <div className="relative">
                 {/* Outer spinning ring */}
                 <div className="animate-spin rounded-full h-16 w-16 border-2 border-blue-500/20 border-t-blue-500 mx-auto mb-4 shadow-lg shadow-blue-500/20"></div>
-                {/* Inner pulsing glow */}
+                {/* Inner pulsing glows */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-10 h-10 bg-blue-500/20 rounded-full animate-pulse" />
                 </div>

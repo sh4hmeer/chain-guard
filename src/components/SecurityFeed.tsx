@@ -50,7 +50,11 @@ export default function SecurityFeed() {
 
       if (response.ok) {
         const data = await response.json();
-        setArticles(data.articles || []);
+        // Sort articles by most recent first
+        const sortedArticles = (data.articles || []).sort((a: SecurityArticle, b: SecurityArticle) => {
+          return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+        });
+        setArticles(sortedArticles);
       }
     } catch (error) {
       console.error('Error fetching security feed:', error);
@@ -157,16 +161,25 @@ export default function SecurityFeed() {
           </div>
           
           {/* Source Filter */}
-          <select
-            value={selectedSource}
-            onChange={(e) => setSelectedSource(e.target.value)}
-            className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 hover:bg-white/10 transition-all duration-200 font-medium"
-          >
-            <option value="all" className="bg-slate-900">All Sources</option>
-            <option value="NIST_NVD" className="bg-slate-900">NIST NVD</option>
-            <option value="CISA_KEV" className="bg-slate-900">CISA KEV (Exploited)</option>
-            <option value="GITHUB_ADVISORY" className="bg-slate-900">GitHub Advisories</option>
-          </select>
+          <div className="relative inline-block">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+              <ChevronDown className="w-5 h-5 text-blue-400" />
+            </div>
+            <select
+              value={selectedSource}
+              onChange={(e) => setSelectedSource(e.target.value)}
+              className="appearance-none pl-12 pr-6 py-3.5 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-2 border-blue-500/30 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 hover:from-blue-500/20 hover:to-purple-500/20 hover:border-blue-400/50 transition-all duration-200 font-semibold cursor-pointer shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 hover:scale-105 min-w-[240px]"
+              style={{
+                backgroundImage: 'none',
+                colorScheme: 'dark'
+              }}
+            >
+              <option value="all" style={{ backgroundColor: '#0f172a', color: '#ffffff' }}>🌐 All Sources</option>
+              <option value="NIST_NVD" style={{ backgroundColor: '#0f172a', color: '#ffffff' }}>🛡️ NIST NVD</option>
+              <option value="CISA_KEV" style={{ backgroundColor: '#0f172a', color: '#ffffff' }}>⚡ CISA KEV (Exploited)</option>
+              <option value="GITHUB_ADVISORY" style={{ backgroundColor: '#0f172a', color: '#ffffff' }}>🐙 GitHub Advisories</option>
+            </select>
+          </div>
         </div>
 
         {/* Articles List */}
@@ -246,7 +259,7 @@ export default function SecurityFeed() {
                         </div>
                       </div>
 
-                      {/* Actions */}
+                      {/* Action */}
                       <div className="flex flex-col gap-3">
                         {!article.aiAnalysis ? (
                           <button
@@ -262,7 +275,7 @@ export default function SecurityFeed() {
                             ) : (
                               <>
                                 <Sparkles size={16} className="group-hover:rotate-12 transition-transform duration-200" />
-                                AI Analysis
+                                Get Insights
                               </>
                             )}
                           </button>
@@ -279,7 +292,7 @@ export default function SecurityFeed() {
                             ) : (
                               <>
                                 <ChevronDown size={16} />
-                                View Analysis
+                                View Insights
                               </>
                             )}
                           </button>
