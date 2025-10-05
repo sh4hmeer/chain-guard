@@ -7,7 +7,7 @@ function RotatingStars() {
   const group = useRef<THREE.Group>(null!);
   const { pointer } = useThree();
 
-  useFrame((_, delta) => {
+  useFrame((_: any, delta: number) => {
     if (!group.current) return;
     // base drift
     group.current.rotation.y += delta * 0.02;
