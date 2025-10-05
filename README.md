@@ -6,7 +6,22 @@
 
 
 
-**Proactive Supply Chain Attack Monitoring Platform**While this project uses React, Vite supports many popular JS frameworks. [See all the supported frameworks](https://vitejs.dev/guide/#scaffolding-your-first-vite-project).
+# ChainGuard 🛡️
+
+**Real-time supply chain security monitoring with AI-powered vulnerability intelligence**
+
+ChainGuard is a comprehensive application security platform that helps organizations track their software inventory and identify vulnerabilities in real-time. Built with React, TypeScript, MongoDB, and Google Gemini AI.
+
+## ✨ Key Features
+
+### 🔍 **Real-Time Security Intelligence** (NEW!)
+- **Multi-Source Threat Feed** - Aggregates from NIST NVD, CISA KEV, and GitHub Security Advisories
+- **AI-Powered Analysis** - Google Gemini analyzes vulnerabilities and provides actionable insights
+- **Impact Matching** - Automatically identifies which of your applications are affected
+- **Risk Assessment** - Multi-framework severity scoring (CVSS, EPSS, business context)
+- **Remediation Guidance** - Specific, prioritized action steps
+
+### 📦 Application Inventory Management
 
 
 ---## Deploy Your Own
@@ -57,7 +72,24 @@ Whenever an app is flagged as vulnerable, ChainGuard automatically alerts IT/sec
 
 ## ✨ Features
 
-- 📊 **Dashboard Overview**: Real-time statistics on applications and vulnerabilities
+- Track all your applications in one central dashboard
+- CSV import for bulk application onboarding
+- MongoDB-backed persistent storage
+- User-specific data isolation (Auth0 authentication)
+
+### 🔐 Live Vulnerability Scanning
+- Integration with **NIST National Vulnerability Database (NVD)** API 2.0
+- Real-time CVE matching against your application inventory
+- Severity categorization (CRITICAL, HIGH, MEDIUM, LOW)
+- Automatic vulnerability correlation with affected applications
+
+### 🤖 AI-Powered Security Intelligence
+- **Gemini AI Analysis** - Get technical summaries and risk assessments
+- **Multi-Source Aggregation** - NIST NVD, CISA KEV, GitHub Security Advisories
+- **Impact Analytics** - Automatic matching against your application stack
+- **Smart Remediation** - AI-generated action plans with priority ordering
+
+### 📊 Comprehensive Dashboard
 - 📦 **Application Inventory**: Add apps manually or import via CSV
 - 🔍 **Vulnerability Tracking**: See all CVEs affecting your applications
 - 🎨 **Severity Classification**: Color-coded CRITICAL, HIGH, MEDIUM, LOW alerts

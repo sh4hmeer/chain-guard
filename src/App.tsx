@@ -5,10 +5,11 @@ import { VulnerabilityList } from './components/VulnerabilityList';
 import { DashboardOverview } from './components/DashboardOverview';
 import { AccountView } from './components/AccountView';
 import { AuthCallback } from './components/AuthCallback';
+import SecurityFeed from './components/SecurityFeed';
 import { Application, Vulnerability, DashboardStats } from './types';
 import { getMockData, getVulnerabilities } from './services/vulnerabilityService';
 import { applicationApi } from './services/apiService';
-import { LayoutDashboard, Package, AlertTriangle, Menu, X, User, LogOut, LogIn } from 'lucide-react';
+import { LayoutDashboard, Package, AlertTriangle, Menu, X, User, LogOut, LogIn, Shield } from 'lucide-react';
 import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
 import { setAuthTokenProvider } from './services/apiService';
 import { LandingPage } from './components/LandingPage';
@@ -41,12 +42,12 @@ function App() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // Public
+        // Public health check
         await applicationApi.healthCheck();
         setApiConnected(true);
   
         if (isAuthenticated) {
-          // protected
+          // Fetch protected user data
           const apps = await applicationApi.getAll();
           setApplications(apps);
           
@@ -64,7 +65,7 @@ function App() {
             setLoadingVulnerabilities(false);
           }
         } else {
-          // not logged in → demo mode with mock data
+          // Not logged in → demo mode with mock data
           const mock = getMockData([]);
           setApplications(mock.applications);
           setVulnerabilities(mock.vulnerabilities);
@@ -79,14 +80,25 @@ function App() {
         setLoading(false);
       }
     };
-  
-    initializeData();
-  }, [isAuthenticated]);
 
-  // Re-fetch vulnerabilities when applications change
+    initializeData();
+  }, [isAuthenticated]); // Only re-run when authentication status changes
+
+
+
+  // Re-fetch vulnerabilities when applications are manually added/removed
+  // (not on initial load, which is handled by initializeData)
+  const applicationsRef = useRef<Application[]>(applications);
   useEffect(() => {
-    const refetchVulnerabilities = async () => {
-      if (applications.length > 0 && isAuthenticated) {
+    // Skip if this is the first render or applications are empty
+    if (applicationsRef.current.length === 0 || !isAuthenticated) {
+      applicationsRef.current = applications;
+      return;
+    }
+
+    // Only refetch if the number of applications actually changed
+    if (applicationsRef.current.length !== applications.length) {
+      const refetchVulnerabilities = async () => {
         setLoadingVulnerabilities(true);
         try {
           const vulns = await getVulnerabilities(applications, true);
@@ -96,12 +108,12 @@ function App() {
         } finally {
           setLoadingVulnerabilities(false);
         }
-      }
-    };
+      };
 
-    refetchVulnerabilities();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applications.length, isAuthenticated]);
+      refetchVulnerabilities();
+      applicationsRef.current = applications;
+    }
+  }, [applications, isAuthenticated]);
 
   useEffect(() => {
     setAuthTokenProvider(async () => {
@@ -243,6 +255,10 @@ function App() {
                   />
                 }
               />
+              <Route
+                path="/security-feed"
+                element={<SecurityFeed />}
+              />
               <Route 
                 path="/callback"
                 element={<AuthCallback />}
@@ -293,6 +309,7 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/applications', label: 'Applications', icon: Package },
     { path: '/vulnerabilities', label: 'Vulnerabilities', icon: AlertTriangle },
+    { path: '/security-feed', label: 'Security Feed', icon: Shield },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -310,7 +327,7 @@ function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: {
             </Link>
             {apiConnected && (
               <span className="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
-                MongoDB Connected
+                Online
               </span>
             )}
             {!apiConnected && (
