@@ -259,7 +259,7 @@ export default function SecurityFeed() {
                         </div>
                       </div>
 
-                      {/* Actions */}
+                      {/* Action */}
                       <div className="flex flex-col gap-3">
                         {!article.aiAnalysis ? (
                           <button
