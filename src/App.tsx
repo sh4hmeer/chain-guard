@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback} from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { AppInventory } from './components/AppInventory';
 import { VulnerabilityList } from './components/VulnerabilityList';
@@ -23,8 +23,8 @@ function App() {
   const { getAccessTokenSilently, isAuthenticated, user} = useAuth0();
 
   // Check API connection and load data
-  useEffect(() => {
-    const initializeData = async () => {
+
+  const initializeData = useCallback ( async () => {
       try {
         // Public
         await applicationApi.healthCheck();
@@ -63,10 +63,14 @@ function App() {
       } finally {
         setLoading(false);
       }
-    };
-  
+    },[]);
+
+
+  useEffect(() => {
     initializeData();
-  }, [isAuthenticated]);
+  }, [initializeData, isAuthenticated, vulnerabilities, applications]);
+
+
 
   // Re-fetch vulnerabilities when applications change
   useEffect(() => {
@@ -223,11 +227,7 @@ function App() {
               />
               <Route
                 path="/security-feed"
-                element={
-                  <Protect
-                    Comp={() => <SecurityFeed />}
-                  />
-                }
+                element={<SecurityFeed />}
               />
               <Route 
                 path="/callback"
