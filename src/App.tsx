@@ -11,6 +11,22 @@ import { applicationApi } from './services/apiService';
 import { LayoutDashboard, Package, AlertTriangle, Menu, X, User, LogOut, LogIn } from 'lucide-react';
 import { useAuth0, withAuthenticationRequired } from '@auth0/auth0-react';
 import { setAuthTokenProvider } from './services/apiService';
+import { LandingPage } from './components/LandingPage';
+import VantaBackground from './components/VantaBackground';
+
+  // Shows Vanta only on /dashboard
+  function DashboardVanta() {
+    const { pathname } = useLocation();
+    if (!pathname.startsWith('/dashboard')) return null;
+    return <VantaBackground />;
+  }
+
+  // Switches outer bg so Vanta is visible on /dashboard
+  function BgSwitcher({ children }: { children: React.ReactNode }) {
+    const { pathname } = useLocation();
+    const bg = pathname.startsWith('/dashboard') ? 'bg-transparent' : 'bg-gray-100';
+    return <div className={`min-h-screen ${bg}`}>{children}</div>;
+  }
 
 function App() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -173,12 +189,17 @@ function App() {
 
   return (
     <Router>
+      <BgSwitcher>
+      <DashboardVanta />   {/* full-page background on /dashboard only */}
       <div className="min-h-screen bg-gray-100">
-        <Navigation 
-          mobileMenuOpen={mobileMenuOpen} 
-          setMobileMenuOpen={setMobileMenuOpen}
-          apiConnected={apiConnected}
-        />
+          {isAuthenticated && (
+          <Navigation
+            mobileMenuOpen={mobileMenuOpen} 
+            setMobileMenuOpen={setMobileMenuOpen}
+            apiConnected={apiConnected}
+          />
+        )}
+
         
         {loading ? (
           <div className="flex items-center justify-center min-h-[60vh]">
@@ -190,8 +211,10 @@ function App() {
         ) : (
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Routes>
+              <Route path="/" element={<LandingPage />} />
+
               <Route
-                path="/"
+                path="/dashboard"
                 element={
                   <DashboardOverview
                     stats={calculateStats()}
@@ -236,11 +259,13 @@ function App() {
           </main>
         )}
       </div>
+      </BgSwitcher>
     </Router>
   );
 }
 
 function Navigation({ mobileMenuOpen, setMobileMenuOpen, apiConnected }: { 
+  
   mobileMenuOpen: boolean; 
   setMobileMenuOpen: (open: boolean) => void;
   apiConnected: boolean;
