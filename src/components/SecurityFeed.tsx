@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Shield, AlertTriangle, TrendingUp, Sparkles, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Shield, AlertTriangle, TrendingUp, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SecurityArticle {
   id: string;
@@ -32,11 +32,8 @@ export default function SecurityFeed() {
   const [expandedArticles, setExpandedArticles] = useState<Set<string>>(new Set());
   const [analyzingArticles, setAnalyzingArticles] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    fetchSecurityFeed();
-  }, [selectedSource]);
 
-  const fetchSecurityFeed = async () => {
+  const fetchSecurityFeed = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
@@ -60,7 +57,11 @@ export default function SecurityFeed() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSource]);
+
+  useEffect(() => {
+    fetchSecurityFeed();
+  }, [fetchSecurityFeed]);
 
   const analyzeArticle = async (article: SecurityArticle) => {
     setAnalyzingArticles(prev => new Set(prev).add(article.id));
@@ -74,7 +75,7 @@ export default function SecurityFeed() {
       });
       const appsData = await appsResponse.json();
       
-      const response = await fetch('/api/security-feed/analyze', {
+      const response = await fetch('/api/security-feed-analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,9 +93,14 @@ export default function SecurityFeed() {
           prev.map(a => a.id === article.id ? data.article : a)
         );
         setExpandedArticles(prev => new Set(prev).add(article.id));
+      } else {
+        const errorData = await response.json();
+        console.error('Analysis failed:', errorData);
+        alert(`Failed to analyze: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error analyzing article:', error);
+      alert('Failed to analyze article. Please try again.');
     } finally {
       setAnalyzingArticles(prev => {
         const next = new Set(prev);

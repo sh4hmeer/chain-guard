@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { jwtVerify } from 'jose';
+import { jwtVerify, importJWK as importJWKFromJose } from 'jose';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 /**
  * Security Feed API with AI Analysis
@@ -28,15 +28,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const token = authHeader.substring(7);
     const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || '';
+    
+    if (!AUTH0_DOMAIN) {
+      console.error('AUTH0_DOMAIN not configured');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+    
     const jwksUrl = `https://${AUTH0_DOMAIN}/.well-known/jwks.json`;
     
-    const JWKS = await fetch(jwksUrl).then(r => r.json());
-    const key = await importJWK(JWKS.keys[0]);
+    const jwksResponse = await fetch(jwksUrl);
+    if (!jwksResponse.ok) {
+      throw new Error('Failed to fetch JWKS');
+    }
     
-    await jwtVerify(token, key, {
+    const JWKS = await jwksResponse.json();
+    const publicKey = await importJWKFromJose(JWKS.keys[0], 'RS256');
+    
+    await jwtVerify(token, publicKey, {
       issuer: `https://${AUTH0_DOMAIN}/`,
     });
   } catch (error) {
+    console.error('Auth error:', error);
     return res.status(401).json({ error: 'Invalid token' });
   }
 
@@ -44,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     try {
       const { source, limit = '20' } = req.query;
-      const limitNum = parseInt(limit as string, 10);
+      const limitNum = Math.min(parseInt(limit as string, 10) || 20, 50); // Max 50
 
       const articles = await fetchSecurityArticles(source as string, limitNum);
       
@@ -63,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // POST /api/security-feed/analyze - Analyze article with Gemini AI
-  if (req.method === 'POST' && req.url?.includes('/analyze')) {
+  if (req.method === 'POST') {
     try {
       const { article, userApplications } = req.body;
 
@@ -71,7 +83,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Article data is required' });
       }
 
-      if (!GEMINI_API_KEY) {
+      if (!GEMINI_API_KEY || !genAI) {
         return res.status(503).json({ 
           error: 'Gemini API key not configured',
           details: 'Please set GEMINI_API_KEY environment variable'
@@ -112,14 +124,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
  * Fetch security articles from various sources
  */
 async function fetchSecurityArticles(source: string | undefined, limit: number) {
-  const articles: any[] = [];
+  const articles: SecurityArticle[] = [];
 
   // NIST NVD
   if (!source || source === 'NIST_NVD') {
     try {
       const response = await fetch(
-        `https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=${limit}&sortBy=published&orderBy=desc`
+        `https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=${limit}`,
+        {
+          headers: {
+            'User-Agent': 'ChainGuard-Security-Platform/1.0'
+          }
+        }
       );
+      
+      if (!response.ok) {
+        console.error('NIST API error:', response.status, response.statusText);
+        throw new Error(`NIST API returned ${response.status}`);
+      }
+      
       const data = await response.json();
       
       const nistArticles = data.vulnerabilities?.map((item: any) => {
@@ -150,8 +173,19 @@ async function fetchSecurityArticles(source: string | undefined, limit: number) 
   if (!source || source === 'CISA_KEV') {
     try {
       const response = await fetch(
-        'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'
+        'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json',
+        {
+          headers: {
+            'User-Agent': 'ChainGuard-Security-Platform/1.0'
+          }
+        }
       );
+      
+      if (!response.ok) {
+        console.error('CISA API error:', response.status, response.statusText);
+        throw new Error(`CISA API returned ${response.status}`);
+      }
+      
       const data = await response.json();
       
       const cisaArticles = data.vulnerabilities?.slice(0, limit).map((vuln: any) => ({
@@ -290,15 +324,18 @@ function parseAIAnalysis(analysisText: string, originalArticle: any) {
 }
 
 /**
- * Helper to import JWK (simplified - use jose library in production)
+ * Type definitions
  */
-async function importJWK(jwk: any) {
-  const keyData = await crypto.subtle.importKey(
-    'jwk',
-    jwk,
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['verify']
-  );
-  return keyData;
+interface SecurityArticle {
+  id: string;
+  source: string;
+  title: string;
+  description: string;
+  publishedDate: string;
+  severity?: string;
+  cvssScore?: number;
+  cveId?: string;
+  affectedProducts?: string[];
+  exploited?: boolean;
+  references?: string[];
 }
