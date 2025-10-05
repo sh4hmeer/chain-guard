@@ -18,6 +18,19 @@ export function SplineBackground() {
     updateSize();
     window.addEventListener('resize', updateSize);
 
+    // Mouse tracking
+    const mouse = { x: 0, y: 0, isActive: false };
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      mouse.isActive = true;
+    };
+    const handleMouseLeave = () => {
+      mouse.isActive = false;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseleave', handleMouseLeave);
+
     // Create a grid of nodes that form an elegant mesh
     const cols = 12;
     const rows = 8;
@@ -48,16 +61,36 @@ export function SplineBackground() {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Update node positions with gentle circular motion
+      // Update node positions with gentle circular motion + mouse interaction
       nodes.forEach((node) => {
         node.angle += node.speed;
-        node.x = node.baseX + Math.cos(node.angle) * node.radius;
-        node.y = node.baseY + Math.sin(node.angle) * node.radius;
+        
+        // Base circular motion
+        let targetX = node.baseX + Math.cos(node.angle) * node.radius;
+        let targetY = node.baseY + Math.sin(node.angle) * node.radius;
+        
+        // Mouse interaction: attract nodes towards cursor
+        if (mouse.isActive) {
+          const dx = mouse.x - node.baseX;
+          const dy = mouse.y - node.baseY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const maxInfluence = 300; // Distance at which mouse stops affecting nodes
+          
+          if (distance < maxInfluence) {
+            const influence = (1 - distance / maxInfluence) * 0.3; // Strength of attraction
+            targetX += dx * influence;
+            targetY += dy * influence;
+          }
+        }
+        
+        // Smooth interpolation for fluid movement
+        node.x += (targetX - node.x) * 0.1;
+        node.y += (targetY - node.y) * 0.1;
       });
 
       // Draw elegant connecting lines between nearby nodes
-      ctx.strokeStyle = 'rgba(59, 130, 246, 0.08)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(59, 130, 246, 0.12)'; // Increased from 0.08
+      ctx.lineWidth = 1.5; // Slightly thicker
       
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
@@ -71,7 +104,7 @@ export function SplineBackground() {
           
           // Only connect nearby nodes
           if (distance < 150) {
-            const opacity = (1 - distance / 150) * 0.15;
+            const opacity = (1 - distance / 150) * 0.30; // Increased from 0.15
             ctx.strokeStyle = `rgba(59, 130, 246, ${opacity})`;
             
             ctx.beginPath();
@@ -84,12 +117,12 @@ export function SplineBackground() {
 
       // Draw subtle gradient lines for extra elegance
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, 'rgba(139, 92, 246, 0.05)');
-      gradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.08)');
-      gradient.addColorStop(1, 'rgba(139, 92, 246, 0.05)');
+      gradient.addColorStop(0, 'rgba(159, 126, 238, 0.08)'); // Increased from 0.05
+      gradient.addColorStop(0.5, 'rgba(81, 135, 222, 0.12)'); // Increased from 0.08
+      gradient.addColorStop(1, 'rgba(161, 127, 240, 0.08)'); // Increased from 0.05
       
       ctx.strokeStyle = gradient;
-      ctx.lineWidth = 0.5;
+      ctx.lineWidth = 0.7; // Increased from 0.5
       
       // Draw horizontal waves
       for (let i = 1; i < rows; i++) {
@@ -125,13 +158,13 @@ export function SplineBackground() {
       nodes.forEach((node, index) => {
         // Only draw some nodes for subtlety
         if (index % 3 === 0) {
-          const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, 4);
-          gradient.addColorStop(0, 'rgba(96, 165, 250, 0.3)');
+          const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, 5);
+          gradient.addColorStop(0, 'rgba(96, 165, 250, 0.45)'); // Increased from 0.3
           gradient.addColorStop(1, 'rgba(96, 165, 250, 0)');
           
           ctx.fillStyle = gradient;
           ctx.beginPath();
-          ctx.arc(node.x, node.y, 4, 0, Math.PI * 2);
+          ctx.arc(node.x, node.y, 5, 0, Math.PI * 2); // Increased from 4
           ctx.fill();
         }
       });
@@ -143,6 +176,8 @@ export function SplineBackground() {
 
     return () => {
       window.removeEventListener('resize', updateSize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseleave', handleMouseLeave);
       cancelAnimationFrame(animationFrame);
     };
   }, []);
@@ -150,11 +185,12 @@ export function SplineBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none"
+      className="fixed inset-0"
       style={{ 
         mixBlendMode: 'screen',
         zIndex: 5,
-        opacity: 0.4
+        opacity: 0.6, // Increased from 0.4
+        pointerEvents: 'none' // Keep non-interactive with UI elements
       }}
     />
   );
