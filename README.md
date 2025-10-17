@@ -1,10 +1,4 @@
-# ChainGuardia 🛡️# React + TypeScript + Vite
-
-
-
-> **"Know when your apps turn against you."**This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-
+Devpost: https://devpost.com/software/chainguardia
 
 # ChainGuardia 🛡️
 
